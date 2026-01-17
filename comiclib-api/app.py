@@ -12,12 +12,16 @@ CORS(app)  # Enable CORS for all routes
 # Import services (we will define these blueprints/routes next)
 from services.make_photo import make_photo_bp
 from services.search_info import search_info_bp
+from services.search_info import search_info_bp
 from services.news import news_bp
+from services.comics import comics_bp
 
 # Register Blueprints
 app.register_blueprint(make_photo_bp, url_prefix='/api')
 app.register_blueprint(search_info_bp, url_prefix='/api')
+app.register_blueprint(search_info_bp, url_prefix='/api')
 app.register_blueprint(news_bp, url_prefix='/api')
+app.register_blueprint(comics_bp, url_prefix='/api')
 
 @app.route('/')
 def health_check():

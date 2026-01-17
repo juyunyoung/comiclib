@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../api/firebase';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardActionArea, CardMedia, CardContent, Typography, Rating } from '@mui/material';
+import { getComics } from '../api/sqlite'; // Now calls API
 
 const ComicList = ({ searchTerm }) => {
   const [comics, setComics] = useState([]);
@@ -10,8 +9,7 @@ const ComicList = ({ searchTerm }) => {
 
   useEffect(() => {
     const fetchComics = async () => {
-      const querySnapshot = await getDocs(collection(db, 'comics'));
-      const comicsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const comicsData = await getComics();
       setComics(comicsData);
     };
     fetchComics();

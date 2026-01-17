@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage, checkConnection } from '../api/firebase';
 import { v4 as uuidv4 } from 'uuid';
 import { TextField, Button, Rating, Box } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
-import { insertComic } from '../api/sqlite';
+import { insertComic, uploadImage } from '../api/sqlite'; // Now acts as API client
 
 const ComicForm = ({ initialData }) => {
   const [title, setTitle] = useState('');
@@ -19,9 +16,9 @@ const ComicForm = ({ initialData }) => {
     if (initialData) {
       setTitle(initialData.title || '');
       setAuthor(initialData.author || '');
-      setReview(initialData.description || ''); // Using description as review initial value
+      setReview(initialData.description || '');
       if (initialData.image) {
-        setCoverImage(initialData.image); // This will be a string URL
+        setCoverImage(initialData.image);
       }
     }
   }, [initialData]);
@@ -29,23 +26,17 @@ const ComicForm = ({ initialData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check Firebase Connectivity
-    const isConnected = await checkConnection();
-    if (!isConnected) {
-      alert("Firebase 연결 상태가 좋지 않아 데이터를 저장할 수 없습니다.");
-      // If verification fails, stop here (to ensure "transmit when connected")
-      // Alternatively, we could save local only, but user asked for connection check to transmit.
-      return;
-    }
-
     let imageUrl = '';
     if (coverImage) {
       if (typeof coverImage === 'string') {
         imageUrl = coverImage;
       } else {
-        const imageRef = ref(storage, `covers/${uuidv4()}`);
-        await uploadBytes(imageRef, coverImage);
-        imageUrl = await getDownloadURL(imageRef);
+        try {
+          imageUrl = await uploadImage(coverImage);
+        } catch (error) {
+          alert('이미지 업로드 실패');
+          return;
+        }
       }
     }
 
@@ -55,31 +46,22 @@ const ComicForm = ({ initialData }) => {
       review,
       rating,
       coverImage: imageUrl,
-      createdAt: new Date(),
+      // createdAt is handled by backend or DB default, but we can send it if needed
+      // sending it for consistency if backend expects it, but usually backend handles it.
     };
 
-    // Save to Firebase
-    try {
-      console.log("Attempting to save to Firebase...", comicData);
-      await addDoc(collection(db, 'comics'), comicData);
-      console.log("Successfully saved to Firebase!");
-    } catch (firebaseError) {
-      console.error("Firebase Save Error:", firebaseError);
-      alert(`Firebase 저장 실패: ${firebaseError.message}`);
-    }
+    const success = await insertComic(comicData);
 
-    // Save to SQLite
-    try {
-      await insertComic(comicData);
-    } catch (err) {
-      console.error("Failed to save to SQLite", err);
+    if (success) {
+      alert("성공적으로 저장되었습니다!");
+      setTitle('');
+      setAuthor('');
+      setReview('');
+      setRating(0);
+      setCoverImage(null);
+    } else {
+      alert("저장 실패");
     }
-
-    setTitle('');
-    setAuthor('');
-    setReview('');
-    setRating(0);
-    setCoverImage(null);
   };
 
   return (
@@ -98,7 +80,6 @@ const ComicForm = ({ initialData }) => {
             />
           </Box>
         )}
-
       </Box>
       <Button
         type="submit"
