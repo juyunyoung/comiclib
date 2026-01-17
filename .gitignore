@@ -1,0 +1,8 @@
+/.DS_Store
+comiclib-app/.env
+comiclib-app/.env
+# Environment Variables (CRITICAL)
+.env
+.env.*ß
+!.env.example
+comiclib-app/.env

@@ -1,0 +1,7 @@
+flask
+flask-cors
+requests
+google-genai
+python-dotenv
+pydantic<2.12
+tenacity<9
