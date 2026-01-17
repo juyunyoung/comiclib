@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardActionArea, CardMedia, CardContent, Typography, Rating } from '@mui/material';
-import { getComics } from '../api/sqlite'; // Now calls API
+
 
 const ComicList = ({ searchTerm }) => {
   const [comics, setComics] = useState([]);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Paper, CircularProgress, TextField } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import heic2any from 'heic2any';
@@ -12,6 +12,8 @@ const FourCutPage = () => {
   const [resultText, setResultText] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [keyword1, setKeyword1] = useState('');
+  const [keyword2, setKeyword2] = useState('');
 
   // Helper to convert file to base64
   const fileToGenerativePart = async (file) => {
@@ -46,6 +48,8 @@ const FourCutPage = () => {
       const formData = new FormData();
       formData.append('image1', myPhoto);
       formData.append('image2', charPhoto);
+      formData.append('keyword1', keyword1 || '어깨동무');
+      formData.append('keyword2', keyword2 || '환하게 웃는');
 
       // Call the comiclib-api backend
       // Using environment variable for API URL
@@ -77,6 +81,17 @@ const FourCutPage = () => {
       alert(`Error: ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = () => {
+    if (resultImage) {
+      const link = document.createElement('a');
+      link.href = resultImage;
+      link.download = 'fourcut-result.jpg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -186,6 +201,24 @@ const FourCutPage = () => {
         </Box>
       </Box>
 
+      {/* Keyword Inputs */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
+        <TextField
+          label="키워드 1 (예: 동작)"
+          placeholder="어깨동무"
+          fullWidth
+          value={keyword1}
+          onChange={(e) => setKeyword1(e.target.value)}
+        />
+        <TextField
+          label="키워드 2 (예: 표정/분위기)"
+          placeholder="환하게 웃는"
+          fullWidth
+          value={keyword2}
+          onChange={(e) => setKeyword2(e.target.value)}
+        />
+      </Box>
+
       <Button
         variant="contained"
         color="secondary"
@@ -212,6 +245,15 @@ const FourCutPage = () => {
           <Paper elevation={3} sx={{ p: 2, display: 'inline-block' }}>
             <img src={resultImage} alt="Result" style={{ maxWidth: '100%', maxHeight: 400 }} />
           </Paper>
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+            >
+              이미지 저장
+            </Button>
+          </Box>
         </Box>
       )}
 

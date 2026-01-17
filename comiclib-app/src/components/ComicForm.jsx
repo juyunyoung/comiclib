@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { TextField, Button, Rating, Box } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
-import { insertComic, uploadImage } from '../api/sqlite'; // Now acts as API client
 
-const ComicForm = ({ initialData }) => {
+const ComicForm = ({ initialData, onSubmit }) => {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [review, setReview] = useState('');
@@ -26,41 +25,25 @@ const ComicForm = ({ initialData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    let imageUrl = '';
-    if (coverImage) {
-      if (typeof coverImage === 'string') {
-        imageUrl = coverImage;
-      } else {
-        try {
-          imageUrl = await uploadImage(coverImage);
-        } catch (error) {
-          alert('이미지 업로드 실패');
-          return;
-        }
-      }
-    }
-
     const comicData = {
       title,
       author,
       review,
       rating,
-      coverImage: imageUrl,
-      // createdAt is handled by backend or DB default, but we can send it if needed
-      // sending it for consistency if backend expects it, but usually backend handles it.
+      coverImage: coverImage,
+      file: coverImage instanceof File ? coverImage : null // Pass file if it is a File object
     };
 
-    const success = await insertComic(comicData);
+    if (onSubmit) {
+      const success = await onSubmit(comicData);
 
-    if (success) {
-      alert("성공적으로 저장되었습니다!");
-      setTitle('');
-      setAuthor('');
-      setReview('');
-      setRating(0);
-      setCoverImage(null);
-    } else {
-      alert("저장 실패");
+      if (success) {
+        setTitle('');
+        setAuthor('');
+        setReview('');
+        setRating(0);
+        setCoverImage(null);
+      }
     }
   };
 

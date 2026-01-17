@@ -78,6 +78,46 @@ python app.py
 
 ---
 
+## 🐳 Docker 실행 방법
+
+Docker를 사용하여 애플리케이션을 손쉽게 실행할 수 있습니다.
+
+### 1. 한꺼번에 실행하기 (Docker Compose) - **권장**
+
+`docker-compose`를 사용하면 Frontend와 Backend를 동시에 실행하고 자동으로 연결할 수 있습니다.
+
+```bash
+# 프로젝트 루트 경로에서 실행
+docker-compose up --build
+```
+
+- **Frontend**: `http://localhost:8080`
+- **Backend**: `http://localhost:5000`
+
+### 2. 개별적으로 실행하기
+
+#### Backend (`comiclib-api`)
+
+```bash
+cd comiclib-api
+docker build -t comiclib-api .
+docker run -d -p 5000:5000 --env-file .env --name comiclib-api comiclib-api
+```
+
+#### Frontend (`comiclib-app`)
+
+Frontend는 API 서버와 통신해야 하므로, 동일한 네트워크에 있거나 호스트 네트워킹을 사용해야 할 수 있습니다.
+
+```bash
+cd comiclib-app
+docker build -t comiclib-app .
+docker run -d -p 8080:80 --name comiclib-app comiclib-app
+```
+
+> **Note**: 개별 실행 시에는 Frontend가 Backend를 찾지 못할 수 있으므로 **Docker Compose 사용을 권장**합니다.
+
+---
+
 ## ✨ 주요 기능
 
 1.  **만화책 등록**: 검색(Naver/Google) 또는 직접 입력을 통해 읽은 만화책 기록

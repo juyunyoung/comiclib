@@ -8,56 +8,94 @@ from google.genai import types
 
 make_photo_bp = Blueprint('make_photo', __name__)
 
-
-def generate_merged_photo(path1, path2, api_key):
+def generate_merged_photo(path1, path2, keyword1, keyword2, api_key):
     """
-    Uploads two images and requests a merged generation from Gemini.
+    Uploads two images via inline bytes and requests merged generation.
     Returns: Base64 encoded image string or raises Exception.
     """
     client = genai.Client(api_key=api_key)
     
-    # 1. Upload images
-    image_1_upload = client.files.upload(file=path1)
-    image_2_upload = client.files.upload(file=path2)
+    # Read files as bytes for Inline Data
+    with open(path1, "rb") as f:
+        img1_data = f.read()
+    with open(path2, "rb") as f:
+        img2_data = f.read()
 
-    # 2. Request Image Synthesis
-    model_name = "gemini-2.0-flash-exp" # "gemini-3-pro-image-preview"
+    # Create Parts with inline data
+    part1 = types.Part.from_bytes(data=img1_data, mime_type="image/jpeg")
+    part2 = types.Part.from_bytes(data=img2_data, mime_type="image/jpeg")
+    prompt_part = types.Part.from_text(text=f"사진의 인물들을 추출하여 다음의 상황으로 합성해 주세요. 키워드 1: {keyword1}, 키워드 2: {keyword2}")
+    print(f"Debug - Prompt: {prompt_part}")
+    model_name = "gemini-3-pro-image-preview"
+    
+    # Configure Safety Settings
+    safety_settings = [
+        types.SafetySetting(
+            category="HARM_CATEGORY_HARASSMENT",
+            threshold="BLOCK_NONE"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_HATE_SPEECH",
+            threshold="BLOCK_NONE"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold="BLOCK_NONE"
+        ),
+        types.SafetySetting(
+            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold="BLOCK_NONE"
+        ),
+    ]
 
+    # Generate Content
     response = client.models.generate_content(
-        model=model_name, 
+        model=model_name,
         contents=[
             types.Content(
                 role="user",
-                parts=[
-                    types.Part.from_uri(file_uri=image_1_upload.uri, mime_type="image/jpeg"),
-                    types.Part.from_uri(file_uri=image_2_upload.uri, mime_type="image/jpeg"),
-                    types.Part.from_text(text="첫 번째 사진의 인물을 두 번째 사진의 인물을 아주 친한 친구인것 처럼 어깨 동무를 하고 환하게 웃는 얼굴로 합성해 주세요 .")
-                ]
+                parts=[part1, part2, prompt_part]
             )
         ],
         config=types.GenerateContentConfig(
-            response_modalities=["IMAGE"], 
+            response_modalities=["IMAGE"],
+            safety_settings=safety_settings
         )
     )
 
-    # 3. Process Result
-    if response.generated_assets:
-        asset = response.generated_assets[0]
-        img_data = asset.image_bytes
-        encoded_img = base64.b64encode(img_data).decode('utf-8')
-        return encoded_img
-    else:
-        raise Exception("No image generated from Gemini")
+    # Process Result
+    print(f"Debug - Full Response: {response}")
+    
+    if hasattr(response, 'generated_images') and response.generated_images:
+         image = response.generated_images[0]
+         return base64.b64encode(image.image_bytes).decode('utf-8')
+         
+    # Fallback: check parts if generated_images key isn't populated for this model
+    if response.candidates:
+        for candidate in response.candidates:
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if part.inline_data:
+                        return base64.b64encode(part.inline_data.data).decode('utf-8')
+    
+    # If we get here, likely failure or text response
+    if response.text:
+         raise Exception(f"Model returned text instead of image: {response.text}")
+         
+    raise Exception("No image generated from Gemini")
 
 
 @make_photo_bp.route('/makePhoto', methods=['POST'])
 def make_photo():
-    # Expecting two images: 'image_1' (person) and 'image_2' (background) as per user concept
     if 'image1' not in request.files or 'image2' not in request.files:
         return jsonify({"error": "Two image files (image1, image2) are required"}), 400
     
     file1 = request.files['image1']
     file2 = request.files['image2']
+    
+    # Get keywords from form data
+    keyword1 = request.form.get('keyword1', '어깨 동무')
+    keyword2 = request.form.get('keyword2', '환하게 웃는 얼굴')
     
     if file1.filename == '' or file2.filename == '':
         return jsonify({"error": "No selected files"}), 400
@@ -70,7 +108,6 @@ def make_photo():
     temp2_path = None
 
     try:
-        # Save temporary files to upload
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp1, \
              tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp2:
             
@@ -80,25 +117,20 @@ def make_photo():
             temp1_path = temp1.name
             temp2_path = temp2.name
 
-        # Call the core logic
-        encoded_img = generate_merged_photo(temp1_path, temp2_path, api_key)
+        encoded_img = generate_merged_photo(temp1_path, temp2_path, keyword1, keyword2, api_key)
         return jsonify({"image": encoded_img})
 
     except Exception as e:
         return jsonify({"error": f"Gemini API error: {str(e)}"}), 500
         
     finally:
-        # Cleanup temp files
         if temp1_path and os.path.exists(temp1_path):
             os.remove(temp1_path)
         if temp2_path and os.path.exists(temp2_path):
             os.remove(temp2_path)
 
 if __name__ == "__main__":
-    # Test Main Function
     import sys
-    
-    # Check for API Key
     from dotenv import load_dotenv
     load_dotenv()
     
@@ -107,20 +139,27 @@ if __name__ == "__main__":
         print("Error: GEMINI_API_KEY not found in environment variables.")
         sys.exit(1)
         
-    img1 = '../inosuke.webp'
-    img2 = '../me.heic'
+    img1 = 'inosuke.webp'
+    img2 = 'me.heic'
     
-    if not os.path.exists(img1) or not os.path.exists(img2):
-        print("Error: One or both image files do not exist.")
-        sys.exit(1)
-        
+    if not os.path.exists(img1):
+         # Try parent dir just in case
+         if os.path.exists('../'+img1):
+             img1 = '../'+img1
+             img2 = '../'+img2
+    
     print(f"Testing generation with: {img1} and {img2}...")
     try:
-        result_b64 = generate_merged_photo(img1, img2, api_key)
+        # Test keywords
+        test_kw1 = "같이 춤을 추는"
+        test_kw2 = "신나는"
+        result_b64 = generate_merged_photo(img1, img2, test_kw1, test_kw2, api_key)
         print("Success! Generated image (base64 length):", len(result_b64))
         
-        # Save output to verify
-        output_filename = "test_output.jpg"
+        output_filename = "../temp/test_output.jpg"
+        # Ensure temp directory exists
+        os.makedirs(os.path.dirname(output_filename), exist_ok=True)
+        
         with open(output_filename, "wb") as f:
             f.write(base64.b64decode(result_b64))
         print(f"Saved generated image to: {output_filename}")

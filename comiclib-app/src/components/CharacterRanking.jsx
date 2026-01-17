@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../api/firebase';
 import { TextField, Button, List, ListItem, ListItemText } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
 

@@ -1,6 +1,13 @@
 import os
+import sys
+
+# Add parent directory to path to allow running as script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 import uuid
-from flask import Blueprint, request, jsonify, url_for, current_app
+from flask import Blueprint, request, jsonify, url_for, current_app, Flask
 from services.comic_service import ComicService
 from werkzeug.utils import secure_filename
 
@@ -60,3 +67,4 @@ def upload_file():
         
         return jsonify({'url': file_url}), 200
     return jsonify({'error': 'File type not allowed'}), 400
+

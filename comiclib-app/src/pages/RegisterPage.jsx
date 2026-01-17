@@ -46,6 +46,59 @@ const RegisterPage = () => {
     setSearchResults([]); // Clear results after selection
   };
 
+  const handleSave = async (comicData) => {
+    try {
+      let imageUrl = comicData.coverImage;
+
+      // If coverImage is a File object, upload it first
+      if (comicData.file instanceof File) {
+        const formData = new FormData();
+        formData.append('file', comicData.file);
+
+        const uploadResponse = await fetch('/api/comics/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(`Image upload failed: ${uploadResponse.status} - ${errorText}`);
+        }
+
+        const uploadResult = await uploadResponse.json();
+        imageUrl = uploadResult.url;
+      }
+
+      // Save comic data
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/comics`, {
+
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...comicData,
+          coverImage: imageUrl,
+          file: undefined // Remove file object from JSON payload
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save comic');
+      }
+
+      const result = await response.json();
+      alert('성공적으로 저장되었습니다!');
+      return true;
+
+    } catch (error) {
+      console.error('Save error:', error);
+      alert(`저장 실패: ${error.message}`);
+      return false;
+    }
+  };
+
   return (
     <div>
       <h1>{t('registerPage.title')}</h1>
@@ -105,7 +158,7 @@ const RegisterPage = () => {
         )}
       </Box>
 
-      <ComicForm initialData={selectedBook} />
+      <ComicForm initialData={selectedBook} onSubmit={handleSave} />
     </div>
   );
 };

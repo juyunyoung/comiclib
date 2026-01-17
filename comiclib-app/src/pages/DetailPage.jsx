@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../api/firebase';
 import CharacterRanking from '../components/CharacterRanking';
 import { useTranslation } from '../context/LanguageContext';
 
@@ -31,7 +29,7 @@ const DetailPage = () => {
       <p>{t('detailPage.author')}: {comic.author}</p>
       <p>{t('detailPage.rating')}: {comic.rating} / 5</p>
       <p>{t('detailPage.review')}: {comic.review}</p>
-      <img src={comic.coverImage} alt={comic.title} style={{width: '200px'}}/>
+      <img src={comic.coverImage} alt={comic.title} style={{ width: '200px' }} />
       <CharacterRanking comicId={id} />
     </div>
   );
