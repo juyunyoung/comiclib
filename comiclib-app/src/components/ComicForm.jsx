@@ -53,6 +53,13 @@ const ComicForm = ({ initialData, onSubmit }) => {
       <TextField label={t('comicForm.authorLabel')} value={author} onChange={e => setAuthor(e.target.value)} fullWidth margin="normal" />
       <TextField label={t('comicForm.reviewLabel')} value={review} onChange={e => setReview(e.target.value)} fullWidth margin="normal" multiline rows={3} inputProps={{ maxLength: 100 }} />
       <Rating value={rating} onChange={(e, newValue) => setRating(newValue)} />
+      <TextField
+        label={t('comicForm.imageUrlLabel')}
+        value={typeof coverImage === 'string' ? coverImage : ''}
+        onChange={(e) => setCoverImage(e.target.value)}
+        fullWidth
+        margin="normal"
+      />
       <Box sx={{ mt: 2, mb: 1 }}>
         {coverImage && (
           <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>

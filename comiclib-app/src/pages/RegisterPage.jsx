@@ -14,13 +14,26 @@ const RegisterPage = () => {
   const handleSearch = async () => {
     if (!query) return;
     setLoading(true);
+    setSearchResults([]);
 
     try {
       // Use the proxy configured in vite.config.js
       const response = await fetch(`/api/naver/search/book.json?query=${encodeURIComponent(query)}&display=5`);
       const data = await response.json();
-      if (data.items) {
+
+      if (data.items && data.items.length > 0) {
         setSearchResults(data.items);
+      } else {
+        // Fallback to Game Search Agent
+        console.log("Naver search empty, trying Game Agent...");
+        const gameResponse = await fetch(`/api/search/game?query=${encodeURIComponent(query)}`);
+
+        if (gameResponse.ok) {
+          const gameData = await gameResponse.json();
+          if (gameData.items && gameData.items.length > 0) {
+            setSearchResults(gameData.items);
+          }
+        }
       }
     } catch (error) {
       console.error('Error searching books:', error);
@@ -70,8 +83,7 @@ const RegisterPage = () => {
       }
 
       // Save comic data
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/comics`, {
+      const response = await fetch('/api/comics', {
 
         method: 'POST',
         headers: {
@@ -80,6 +92,7 @@ const RegisterPage = () => {
         body: JSON.stringify({
           ...comicData,
           coverImage: imageUrl,
+          user_id: 'juyunyoung',
           file: undefined // Remove file object from JSON payload
         }),
       });
@@ -111,7 +124,7 @@ const RegisterPage = () => {
           <TextField
             id="book-search-query"
             name="book-search-query"
-            label="제목 검색"
+            label="제목으로 검색"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             size="small"

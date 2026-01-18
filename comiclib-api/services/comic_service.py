@@ -15,6 +15,7 @@ class ComicService:
         Add a new comic.
         comic_data should contain: title, author, review, rating, coverImage
         """
+        print(comic_data)
         response = self.supabase.table(self.table_name).insert(comic_data).execute()
         return response.data
 

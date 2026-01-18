@@ -8,19 +8,20 @@ const en = {
   },
   home: {
     title: '2D Friend News',
-    searchLabel: 'Search by comic title',
+    searchLabel: 'Search by title',
     library: 'Library',
   },
   stats: {
     title: 'Statistics',
-    total: 'Total Comics Registered',
+    total: 'Total Friends',
   },
   comicForm: {
     titleLabel: 'Title',
     authorLabel: 'Author',
     reviewLabel: 'Review (100 characters)',
     upload: 'Upload Cover Image',
-    submit: 'Add Comic',
+    imageUrlLabel: 'Image URL',
+    submit: 'Add Friend House',
   },
   registerPage: {
     title: 'New Friend',

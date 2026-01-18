@@ -8,19 +8,20 @@ const ko = {
   },
   home: {
     title: '2D 친구 소식',
-    searchLabel: '만화 제목으로 검색',
+    searchLabel: '제목으로 검색',
     library: '라이브러리',
   },
   stats: {
     title: '통계',
-    total: '등록된 만화 수',
+    total: '등록된 친구 수',
   },
   comicForm: {
     titleLabel: '제목',
     authorLabel: '작가',
     reviewLabel: '리뷰 (100자)',
     upload: '표지 이미지 업로드',
-    submit: '만화 추가',
+    imageUrlLabel: '이미지 URL',
+    submit: '친구집 추가',
   },
   registerPage: {
     title: '새 친구',
