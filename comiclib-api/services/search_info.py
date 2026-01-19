@@ -120,6 +120,7 @@ def search_info():
     except Exception as e:
         return jsonify({"error": f"Gemini Agent error: {str(e)}"}), 500
 
+
 @search_info_bp.route('/search/game', methods=['GET'])
 def search_game_info():
     query = request.args.get('query')
@@ -136,6 +137,68 @@ def search_game_info():
 
     except Exception as e:
         return jsonify({"error": f"Gemini Game Agent error: {str(e)}"}), 500
+
+
+# Character Search Models and Function
+class CharacterItem(BaseModel):
+    name: str = Field(description="Name of the character")
+    image: str = Field(description="URL of the character's image")
+    description: str = Field(description="Brief description of the character")
+
+class CharacterSearchResponse(BaseModel):
+    characters: List[CharacterItem]
+
+def get_character_info(query, api_key):
+    """
+    Performs a Google Search grounded query using Gemini to find character info.
+    Returns: Dict with 'characters' list.
+    """
+    client = genai.Client(api_key=api_key)
+
+    system_instruction = """
+    당신은 만화 및 게임 캐릭터 전문가 AI 에이전트입니다.
+    사용자가 입력한 만화 또는 게임 제목과 관련된 주요 캐릭터들을 Google 검색을 통해 찾아서 목록으로 정리해주세요.
+    각 항목은 캐릭터 이름, 이미지URL, 설명으로 구성되어야 합니다.
+    이미지는 Google 검색 결과에서 해당 캐릭터를 잘 나타내는 이미지를 선택해주세요.
+    검색 결과는 반드시 한국어로 작성해주세요.
+    """
+
+    response = client.models.generate_content(
+        model='gemini-2.0-flash-exp',
+        contents=f"'{query}'에 등장하는 주요 캐릭터들을 찾아주세요.",
+        config=types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+            response_mime_type="application/json",
+            response_schema=CharacterSearchResponse,
+        )
+    )
+    
+    if response.parsed:
+        return response.parsed.model_dump()
+    else:
+        import json
+        try:
+            return json.loads(response.text)
+        except:
+            return {"characters": []}
+
+@search_info_bp.route('/search/character', methods=['GET'])
+def search_character_info():
+    query = request.args.get('query')
+    if not query:
+        return jsonify({"error": "Query parameter is required"}), 400
+
+    api_key = os.environ.get('GEMINI_API_KEY')
+    if not api_key:
+        return jsonify({"error": "Server configuration error: Missing Gemini API Key"}), 500
+
+    try:
+        result = get_character_info(query, api_key)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": f"Gemini Character Agent error: {str(e)}"}), 500
 
 
 if __name__ == "__main__":

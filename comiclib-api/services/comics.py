@@ -39,6 +39,16 @@ def add_comic():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@comics_bp.route('/comics/character', methods=['POST'])
+def add_comic_character():
+    try:
+        data = request.json
+        # Expect data matching the schema: usesr_id, comics_id, photo_id, note, charactor_name
+        result = comic_service.add_comic_character(data)
+        return jsonify(result), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @comics_bp.route('/comics/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -67,4 +77,16 @@ def upload_file():
         
         return jsonify({'url': file_url}), 200
     return jsonify({'error': 'File type not allowed'}), 400
+
+@comics_bp.route('/comics/search', methods=['GET'])
+def search_comics():
+    try:
+        query = request.args.get('q') or request.args.get('query')
+        if not query:
+             return jsonify({'error': 'Query parameter required'}), 400
+             
+        data = comic_service.search_comics(query)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 

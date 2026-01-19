@@ -10,11 +10,16 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [characters, setCharacters] = useState([]);
+  const [isCharacterLoading, setIsCharacterLoading] = useState(false);
+
+  const [selectedCharacters, setSelectedCharacters] = useState([]);
 
   const handleSearch = async () => {
     if (!query) return;
     setLoading(true);
     setSearchResults([]);
+    setSelectedCharacters([]); // Clear selections on new search
 
     try {
       // Use the proxy configured in vite.config.js
@@ -43,7 +48,7 @@ const RegisterPage = () => {
     }
   };
 
-  const handleSelectBook = (book) => {
+  const handleSelectBook = async (book) => {
     // Format book data for ComicForm
     // Naver API returns title with <b> tags, remove them
     const cleanTitle = book.title.replace(/<[^>]+>/g, '');
@@ -57,6 +62,34 @@ const RegisterPage = () => {
       image: book.image,
     });
     setSearchResults([]); // Clear results after selection
+
+    // Search for characters
+    setIsCharacterLoading(true);
+    setCharacters([]);
+    setSelectedCharacters([]); // Reset selections
+    try {
+      const response = await fetch(`/api/search/character?query=${encodeURIComponent(cleanTitle)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.characters) {
+          setCharacters(data.characters);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching characters:', error);
+    } finally {
+      setIsCharacterLoading(false);
+    }
+  };
+
+  const handleCharacterClick = (charName) => {
+    setSelectedCharacters(prev => {
+      if (prev.includes(charName)) {
+        return prev.filter(name => name !== charName);
+      } else {
+        return [...prev, charName];
+      }
+    });
   };
 
   const handleSave = async (comicData) => {
@@ -102,7 +135,43 @@ const RegisterPage = () => {
       }
 
       const result = await response.json();
+
+      // Save selected characters
+      if (result && selectedCharacters.length > 0) {
+        // Handle Supabase response which is typically an array, but be robust
+        const newComicId = Array.isArray(result) ? result[0]?.id : result?.id;
+
+        if (newComicId) {
+          try {
+            const charPromises = selectedCharacters.map(charName =>
+              fetch('/api/comics/character', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  user_id: 'juyunyoung',
+                  comics_id: newComicId,
+                  charactor_name: charName,
+                  note: ''
+                })
+              })
+            );
+            await Promise.all(charPromises);
+          } catch (charError) {
+            console.error('Error saving characters:', charError);
+          }
+        }
+      }
+
       alert('성공적으로 저장되었습니다!');
+
+      // Reset page state
+      setQuery('');
+      setSearchResults([]);
+      setSelectedBook(null);
+      setCharacters([]);
+      setSelectedCharacters([]);
+      setHasSearched(false);
+
       return true;
 
     } catch (error) {
@@ -169,6 +238,45 @@ const RegisterPage = () => {
             </Typography>
           )
         )}
+      </Box>
+
+      <Box sx={{ mt: 4 }}>
+        {isCharacterLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={24} sx={{ mr: 1 }} />
+            <Typography>캐릭터 정보 찾는 중...</Typography>
+          </Box>
+        ) : characters.length > 0 ? (
+          <Box>
+            <Typography variant="h6" gutterBottom>등장 캐릭터 (클릭하여 선택)</Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {characters.map((char, index) => {
+                const isSelected = selectedCharacters.includes(char.name);
+                return (
+                  <Box
+                    key={index}
+                    onClick={() => handleCharacterClick(char.name)}
+                    sx={{
+                      border: isSelected ? '2px solid #1976d2' : '1px solid #eee',
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: isSelected ? '#e3f2fd' : '#f9f9f9',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      color: isSelected ? '#1565c0' : 'inherit',
+                      fontWeight: isSelected ? 'bold' : 'normal',
+                      '&:hover': {
+                        bgcolor: isSelected ? '#bbdefb' : '#eee'
+                      }
+                    }}
+                  >
+                    <Typography variant="body2">{char.name}</Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+        ) : null}
       </Box>
 
       <ComicForm initialData={selectedBook} onSubmit={handleSave} />

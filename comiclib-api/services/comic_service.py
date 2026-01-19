@@ -15,8 +15,18 @@ class ComicService:
         Add a new comic.
         comic_data should contain: title, author, review, rating, coverImage
         """
-        print(comic_data)
         response = self.supabase.table(self.table_name).insert(comic_data).execute()
+        return response.data
+
+    def add_comic_character(self, character_data: dict):
+        """
+        Add a new comic character.
+        Table: comic_charactor
+        Columns: usesr_id, comics_id, photo_id, note, charactor_name
+        """
+        print(character_data)   
+        response = self.supabase.table("comic_charactor").insert(character_data).execute()
+        print(response.data)
         return response.data
 
     def update_comic(self, comic_id: int, updates: dict):
