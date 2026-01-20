@@ -9,43 +9,30 @@ const StatsPage = () => {
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        // Fetching real data
-        const q = query(collection(db, 'comics'), orderBy('rating', 'desc'));
-        const querySnapshot = await getDocs(q);
-        const characters = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const response = await fetch('/api/comics/user-characters?user_id=juyunyoung');
 
-        // Use Mock Data if no real data found OR to satisfy "Show mock data" request
-        // Since the user explicitly asked to SHOW mock data, I will append/use it.
-        const mockData = Array.from({ length: 10 }, (_, i) => ({
-          id: `mock-${i}`,
-          title: `Character ${i + 1}`,
-          author: `Comic Series ${i + 1}`,
-          rating: 5 - (i % 3) * 0.5, // 5, 4.5, 4, 5, ...
-          coverImage: `https://via.placeholder.com/150?text=Char+${i + 1}`,
-          description: 'Mock description for character ranking display.'
-        }));
-
-        if (characters.length > 0) {
-          setRankedCharacters(characters);
-        } else {
-          setRankedCharacters(mockData);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user characters');
         }
-        // For demonstration purposes, if you want ONLY mock data regardless of DB, uncomment below:
-        // setRankedCharacters(mockData); 
+
+        const data = await response.json();
+
+        // Map backend response to frontend structure
+        // Backend: { charactor_name, comics: { title, rating, coverImage } }
+        // Frontend: { id, title (char name), author (comic title), rating, coverImage }
+        const formattedData = data.map((item, index) => ({
+          id: `char-${index}`,
+          title: item.charactor_name,
+          author: item.comics?.title || 'Unknown Comic',
+          rating: item.comics?.rating || 0,
+          coverImage: item.comics?.coverImage || 'https://via.placeholder.com/150?text=No+Image'
+        }));
+
+        setRankedCharacters(formattedData);
       } catch (error) {
         console.error("Error fetching characters:", error);
-        // Fallback to mock data on error
-        const mockData = Array.from({ length: 10 }, (_, i) => ({
-          id: `mock-${i}`,
-          title: `Character ${i + 1}`,
-          author: `Comic Series ${i + 1}`,
-          rating: 5 - (i % 3) * 0.5,
-          coverImage: `https://via.placeholder.com/150?text=Char+${i + 1}`
-        }));
-        setRankedCharacters(mockData);
+        // Fallback to empty list or handle error appropriately
+        setRankedCharacters([]);
       }
     };
 

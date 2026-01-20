@@ -90,3 +90,16 @@ def search_comics():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@comics_bp.route('/comics/user-characters', methods=['GET'])
+def get_characters_with_comic_info():
+    try:
+        user_id = request.args.get('user_id')
+        if not user_id:
+             return jsonify({'error': 'user_id is required'}), 400
+             
+        data = comic_service.get_characters_with_comic_info(user_id)
+        print(data)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

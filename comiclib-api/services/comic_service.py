@@ -38,3 +38,45 @@ class ComicService:
         """Delete a comic by ID."""
         response = self.supabase.table(self.table_name).delete().eq("id", comic_id).execute()
         return response.data
+
+    def get_characters_with_comic_info(self, user_id: str):
+        """
+        Fetch characters with their associated comic info.
+        Since foreign key relationship might be missing, we do a manual join.
+        """
+        # 1. Fetch characters for the user
+        chars_response = self.supabase.table("comic_charactor")\
+            .select("*")\
+            .eq("user_id", user_id)\
+            .execute()
+        
+        characters = chars_response.data
+        if not characters:
+            return []
+
+        # 2. Extract comic IDs
+        comic_ids = [c['comics_id'] for c in characters if 'comics_id' in c]
+        if not comic_ids:
+            return characters # Return characters without comic info if no IDs
+
+        # 3. Fetch comics details
+        comics_response = self.supabase.table("comics")\
+            .select("id, title, rating, coverImage")\
+            .in_("id", comic_ids)\
+            .execute()
+        
+        comics_map = {c['id']: c for c in comics_response.data}
+
+        # 4. Merge data
+        result = []
+        for char in characters:
+            comic_info = comics_map.get(char.get('comics_id'))
+            
+            # Construct the format expected by frontend (or flat, but frontend expects nested 'comics')
+            char_data = {
+                "charactor_name": char.get('charactor_name'),
+                "comics": comic_info if comic_info else {}
+            }
+            result.append(char_data)
+            
+        return result
