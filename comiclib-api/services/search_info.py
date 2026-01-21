@@ -76,31 +76,41 @@ def get_game_search_info(query, api_key):
     각 항목은 제목, 이미지URL, 작가(혹은 개발사), 설명으로 구성되어야 합니다.
     이미지는 Google 검색 결과에서 최신의 가장 적절한 이미지를 선택해주세요.
     검색 결과는 반드시 한국어로 작성해주세요.
+    
+    응답은 반드시 다음 JSON 형식을 따라주세요. 코드 블록 없이 JSON만 반환하세요.
+    {
+        "items": [
+            {
+                "title": "제목",
+                "image": "이미지URL",
+                "author": "작가/개발사",
+                "description": "설명"
+            }
+        ]
+    }
     """
 
-    response = client.models.generate_content(
-        model='gemini-2.0-flash-exp',
-        contents=query,
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-            response_mime_type="application/json",
-            response_schema=GameSearchResponse,
-        )
-    )
+    import json
+    import re
     
-    # response.parsed is available when response_schema is used
-    if response.parsed:
-        print(response.parsed.model_dump())
-        return response.parsed.model_dump()
-    else:
-        # Fallback if parsing fails (shouldn't happen with strict schema)
-        import json
-        try:
-            print(response.text)
-            return json.loads(response.text)
-        except:
-            return {"items": []}
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-exp',
+            contents=query,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+            )
+        )
+        
+        text = response.text
+        # Remove code blocks if present
+        text = re.sub(r'```json\s*|\s*```', '', text)
+        return json.loads(text)
+    except Exception as e:
+        print(f"Gemini Game Agent error: {str(e)}")
+        # Fallback
+        return {"items": []}
 
 
 @search_info_bp.route('/searchInfo', methods=['GET'])
@@ -161,27 +171,38 @@ def get_character_info(query, api_key):
     각 항목은 캐릭터 이름, 이미지URL, 설명으로 구성되어야 합니다.
     이미지는 Google 검색 결과에서 해당 캐릭터를 잘 나타내는 이미지를 선택해주세요.
     검색 결과는 반드시 한국어로 작성해주세요.
+    
+    응답은 반드시 다음 JSON 형식을 따라주세요. 코드 블록 없이 JSON만 반환하세요.
+    {
+        "characters": [
+            {
+                "name": "캐릭터 이름",
+                "image": "이미지URL",
+                "description": "설명"
+            }
+        ]
+    }
     """
 
-    response = client.models.generate_content(
-        model='gemini-2.0-flash-exp',
-        contents=f"'{query}'에 등장하는 주요 캐릭터들을 찾아주세요.",
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-            response_mime_type="application/json",
-            response_schema=CharacterSearchResponse,
+    import json
+    import re
+
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-exp',
+            contents=f"'{query}'에 등장하는 주요 캐릭터들을 찾아주세요.",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+            )
         )
-    )
-    
-    if response.parsed:
-        return response.parsed.model_dump()
-    else:
-        import json
-        try:
-            return json.loads(response.text)
-        except:
-            return {"characters": []}
+        
+        text = response.text
+        text = re.sub(r'```json\s*|\s*```', '', text)
+        return json.loads(text)
+    except Exception as e:
+        print(f"Character Search Parsing Error: {e}")
+        return {"characters": []}
 
 @search_info_bp.route('/search/character', methods=['GET'])
 def search_character_info():

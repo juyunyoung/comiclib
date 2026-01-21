@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ComicForm from '../components/ComicForm';
 import { useTranslation } from '../context/LanguageContext';
 import { TextField, Button, List, ListItem, ListItemButton, ListItemText, ListItemAvatar, Avatar, Typography, Box, CircularProgress } from '@mui/material';
 
 const RegisterPage = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,6 +17,25 @@ const RegisterPage = () => {
   const [isCharacterLoading, setIsCharacterLoading] = useState(false);
 
   const [selectedCharacters, setSelectedCharacters] = useState([]);
+
+  useEffect(() => {
+    if (location.state && location.state.editMode && location.state.data) {
+      const { data } = location.state;
+      // Pre-fill the form with existing data
+      setSelectedBook({
+        title: data.title,
+        author: data.author,
+        description: '', // You might want to fetch description if available or leave empty/handled by form
+        rating: data.rating,
+        review: data.review, // Assuming 'review' is part of the data passed
+        image: data.coverImage,
+        // Include ID for update logic if needed (e.g., hidden field or separate state)
+        id: data.id,
+        user_id: data.user_id,
+      });
+      console.log("Edit mode enabled for:", data.title);
+    }
+  }, [location.state]);
 
   const handleSearch = async () => {
     if (!query) return;
@@ -183,7 +205,7 @@ const RegisterPage = () => {
 
   return (
     <div>
-      <h1>{t('registerPage.title')}</h1>
+      <h1>{location.state?.editMode ? 'Edit Friend' : t('registerPage.title')}</h1>
 
       <Box sx={{ mb: 4, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
         <Typography variant="h6" gutterBottom>

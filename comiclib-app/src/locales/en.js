@@ -41,6 +41,10 @@ const en = {
   },
   statsPage: {
     title: 'My Best Friends',
+    tabs: {
+      myFriends: 'My Friends',
+      myFriendsHouse: "My Friend's House",
+    },
   },
   fourCutPage: {
     title: 'Bestie 4-Cut',

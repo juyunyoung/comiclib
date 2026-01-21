@@ -41,6 +41,10 @@ const ko = {
   },
   statsPage: {
     title: '나의 베프들',
+    tabs: {
+      myFriends: '내 친구들',
+      myFriendsHouse: '내친구집',
+    },
   },
   fourCutPage: {
     title: '베프와4컷',
