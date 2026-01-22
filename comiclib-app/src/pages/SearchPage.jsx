@@ -4,7 +4,7 @@ import ComicForm from '../components/ComicForm';
 import { useTranslation } from '../context/LanguageContext';
 import { TextField, Button, List, ListItem, ListItemButton, ListItemText, ListItemAvatar, Avatar, Typography, Box, CircularProgress } from '@mui/material';
 
-const RegisterPage = () => {
+const SearchPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
@@ -18,42 +18,47 @@ const RegisterPage = () => {
 
   const [selectedCharacters, setSelectedCharacters] = useState([]);
 
+  // Auto-search effect
+  const [isEditMode, setIsEditMode] = useState(false);
+
   useEffect(() => {
-    if (location.state && location.state.editMode && location.state.data) {
-      const { data } = location.state;
-      // Pre-fill the form with existing data
-      setSelectedBook({
-        title: data.title,
-        author: data.author,
-        description: '', // You might want to fetch description if available or leave empty/handled by form
-        rating: data.rating,
-        review: data.review, // Assuming 'review' is part of the data passed
-        image: data.coverImage,
-        // Include ID for update logic if needed (e.g., hidden field or separate state)
-        id: data.id,
-        user_id: data.user_id,
-      });
-      console.log("Edit mode enabled for:", data.title);
+    if (location.state) {
+      if (location.state.query) {
+        setQuery(location.state.query);
+        // Trigger search immediately
+        performSearch(location.state.query);
+      } else if (location.state.editMode && location.state.data) {
+        setIsEditMode(true);
+        const { data } = location.state;
+        setSelectedBook({
+          title: data.title,
+          author: data.author,
+          description: '',
+          rating: data.rating,
+          review: data.review,
+          image: data.coverImage,
+          id: data.id,
+          user_id: data.user_id,
+        });
+      }
     }
   }, [location.state]);
 
-  const handleSearch = async () => {
-    if (!query) return;
+  const performSearch = async (searchQuery) => {
+    if (!searchQuery) return;
     setLoading(true);
     setSearchResults([]);
-    setSelectedCharacters([]); // Clear selections on new search
+    setSelectedCharacters([]);
 
     try {
-      // Use the proxy configured in vite.config.js
-      const response = await fetch(`/api/naver/search/book.json?query=${encodeURIComponent(query)}&display=5`);
+      const response = await fetch(`/api/naver/search/book.json?query=${encodeURIComponent(searchQuery)}&display=5`);
       const data = await response.json();
 
       if (data.items && data.items.length > 0) {
         setSearchResults(data.items);
       } else {
-        // Fallback to Game Search Agent
         console.log("Naver search empty, trying Game Agent...");
-        const gameResponse = await fetch(`/api/search/game?query=${encodeURIComponent(query)}`);
+        const gameResponse = await fetch(`/api/search/game?query=${encodeURIComponent(searchQuery)}`);
 
         if (gameResponse.ok) {
           const gameData = await gameResponse.json();
@@ -70,9 +75,11 @@ const RegisterPage = () => {
     }
   };
 
+  const handleSearchClick = () => {
+    performSearch(query);
+  };
+
   const handleSelectBook = async (book) => {
-    // Format book data for ComicForm
-    // Naver API returns title with <b> tags, remove them
     const cleanTitle = book.title.replace(/<[^>]+>/g, '');
     const cleanAuthor = book.author.replace(/<[^>]+>/g, '');
     const cleanDescription = book.description.replace(/<[^>]+>/g, '');
@@ -83,12 +90,11 @@ const RegisterPage = () => {
       description: cleanDescription,
       image: book.image,
     });
-    setSearchResults([]); // Clear results after selection
+    setSearchResults([]);
 
-    // Search for characters
     setIsCharacterLoading(true);
     setCharacters([]);
-    setSelectedCharacters([]); // Reset selections
+    setSelectedCharacters([]);
     try {
       const response = await fetch(`/api/search/character?query=${encodeURIComponent(cleanTitle)}`);
       if (response.ok) {
@@ -118,7 +124,6 @@ const RegisterPage = () => {
     try {
       let imageUrl = comicData.coverImage;
 
-      // If coverImage is a File object, upload it first
       if (comicData.file instanceof File) {
         const formData = new FormData();
         formData.append('file', comicData.file);
@@ -137,7 +142,6 @@ const RegisterPage = () => {
         imageUrl = uploadResult.url;
       }
 
-      // Save comic data
       const response = await fetch('/api/comics', {
 
         method: 'POST',
@@ -148,7 +152,7 @@ const RegisterPage = () => {
           ...comicData,
           coverImage: imageUrl,
           user_id: 'juyunyoung',
-          file: undefined // Remove file object from JSON payload
+          file: undefined
         }),
       });
 
@@ -158,9 +162,7 @@ const RegisterPage = () => {
 
       const result = await response.json();
 
-      // Save selected characters
       if (result && selectedCharacters.length > 0) {
-        // Handle Supabase response which is typically an array, but be robust
         const newComicId = Array.isArray(result) ? result[0]?.id : result?.id;
 
         if (newComicId) {
@@ -186,13 +188,15 @@ const RegisterPage = () => {
 
       alert('성공적으로 저장되었습니다!');
 
-      // Reset page state
       setQuery('');
       setSearchResults([]);
       setSelectedBook(null);
       setCharacters([]);
       setSelectedCharacters([]);
       setHasSearched(false);
+
+      // Optionally navigate back to stats or stay
+      // navigate('/stats'); 
 
       return true;
 
@@ -205,62 +209,64 @@ const RegisterPage = () => {
 
   return (
     <div>
-      <h1>{location.state?.editMode ? 'Edit Friend' : t('registerPage.title')}</h1>
+      <h1>{isEditMode ? (t('statsPage.editTitle') || "Edit Friend's House") : (t('searchPage.title') || 'Search Friends')}</h1>
 
-      <Box sx={{ mb: 4, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          {t('home.searchLabel') || '친구 검색'}
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            id="book-search-query"
-            name="book-search-query"
-            label="제목으로 검색"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            size="small"
-            fullWidth
-            autoComplete="off"
-            inputProps={{
-              autoComplete: 'off',
-              form: {
+      {!isEditMode && (
+        <Box sx={{ mb: 4, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            {t('home.searchLabel') || '친구 검색'}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              id="book-search-query"
+              name="book-search-query"
+              label="제목으로 검색"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              size="small"
+              fullWidth
+              autoComplete="off"
+              inputProps={{
                 autoComplete: 'off',
-              },
-            }}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          />
-          <Button variant="contained" onClick={handleSearch} disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : '검색'}
-          </Button>
-        </Box>
+                form: {
+                  autoComplete: 'off',
+                },
+              }}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearchClick()}
+            />
+            <Button variant="contained" onClick={handleSearchClick} disabled={loading}>
+              {loading ? <CircularProgress size={24} /> : '검색'}
+            </Button>
+          </Box>
 
-        {searchResults.length > 0 ? (
-          <List sx={{ mt: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
-            {searchResults.map((book, index) => (
-              <ListItem
-                key={index}
-                disablePadding
-              >
-                <ListItemButton onClick={() => handleSelectBook(book)}>
-                  <ListItemAvatar>
-                    <Avatar src={book.image} variant="rounded" />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={<span dangerouslySetInnerHTML={{ __html: book.title }} />}
-                    secondary={book.author.replace(/<[^>]+>/g, '')}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        ) : (
-          hasSearched && !loading && (
-            <Typography variant="body1" color="text.secondary" align="center" sx={{ mt: 4 }}>
-              검색된 내용이 없습니다.
-            </Typography>
-          )
-        )}
-      </Box>
+          {searchResults.length > 0 ? (
+            <List sx={{ mt: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+              {searchResults.map((book, index) => (
+                <ListItem
+                  key={index}
+                  disablePadding
+                >
+                  <ListItemButton onClick={() => handleSelectBook(book)}>
+                    <ListItemAvatar>
+                      <Avatar src={book.image} variant="rounded" />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={<span dangerouslySetInnerHTML={{ __html: book.title }} />}
+                      secondary={book.author.replace(/<[^>]+>/g, '')}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          ) : (
+            hasSearched && !loading && (
+              <Typography variant="body1" color="text.secondary" align="center" sx={{ mt: 4 }}>
+                검색된 내용이 없습니다.
+              </Typography>
+            )
+          )}
+        </Box>
+      )}
 
       <Box sx={{ mt: 4 }}>
         {isCharacterLoading ? (
@@ -301,9 +307,9 @@ const RegisterPage = () => {
         ) : null}
       </Box>
 
-      <ComicForm initialData={selectedBook} onSubmit={handleSave} submitLabel="친구집 추가" />
+      <ComicForm initialData={selectedBook} onSubmit={handleSave} submitLabel={isEditMode ? "친구집 수정" : "친구집 추가"} />
     </div>
   );
 };
 
-export default RegisterPage;
+export default SearchPage;

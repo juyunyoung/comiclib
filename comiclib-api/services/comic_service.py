@@ -10,6 +10,11 @@ class ComicService:
         response = self.supabase.table(self.table_name).select("*").execute()
         return response.data
 
+    def get_comic_by_id(self, comic_id: int):
+        """Fetch a single comic by ID."""
+        response = self.supabase.table(self.table_name).select("*").eq("id", comic_id).single().execute()
+        return response.data
+
     def add_comic(self, comic_data: dict):
         """
         Add a new comic.

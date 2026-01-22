@@ -22,9 +22,14 @@ const ko = {
     upload: '표지 이미지 업로드',
     imageUrlLabel: '이미지 URL',
     submit: '친구집 추가',
+    submitUpdate: '친구집 수정',
+    submitAdd: '친구집 추가',
   },
   registerPage: {
     title: '새 친구',
+  },
+  searchPage: {
+    title: '친구집 검색',
   },
   detailPage: {
     loading: '불러오는 중...',

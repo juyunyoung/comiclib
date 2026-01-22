@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../context/LanguageContext';
-import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography, Box, Rating, Paper, Tabs, Tab, IconButton } from '@mui/material';
+import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography, Box, Rating, Paper, Tabs, Tab, IconButton, TextField, Button } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 
 const StatsPage = () => {
@@ -10,6 +10,13 @@ const StatsPage = () => {
   const [rankedCharacters, setRankedCharacters] = useState([]);
   const [comicsList, setComicsList] = useState([]);
   const [tabValue, setTabValue] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate('/search', { state: { query: searchQuery } });
+    }
+  };
 
   useEffect(() => {
     fetchCharacters();
@@ -189,48 +196,64 @@ const StatsPage = () => {
         )}
 
         {tabValue === 1 && (
-          <List>
-            {comicsList.map((comic) => (
-              <Paper key={comic.id} sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }} elevation={1}>
-                <ListItem
-                  alignItems="flex-start"
-                  secondaryAction={
-                    <IconButton edge="end" aria-label="edit" onClick={() => navigate('/register', { state: { editMode: true, data: comic } })}>
-                      <EditIcon />
-                    </IconButton>
-                  }
-                >
-                  <ListItemAvatar sx={{ width: 60, height: 60, mr: 2 }}>
-                    <Avatar
-                      src={comic.coverImage}
-                      variant="rounded"
-                      sx={{ width: 60, height: 60 }}
-                    />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Typography variant="h6" component="div">
-                        {comic.title}
-                      </Typography>
+          <>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
+                placeholder={t('home.searchLabel') || "Search..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <Button variant="contained" onClick={handleSearch} disabled={!searchQuery.trim()}>
+                {t('home.searchLabel') || "Search"}
+              </Button>
+            </Box>
+            <List>
+              {comicsList.map((comic) => (
+                <Paper key={comic.id} sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }} elevation={1}>
+                  <ListItem
+                    alignItems="flex-start"
+                    secondaryAction={
+                      <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${comic.id}`, { state: { editMode: true, data: comic } })}>
+                        <EditIcon />
+                      </IconButton>
                     }
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                          {comic.author}
+                  >
+                    <ListItemAvatar sx={{ width: 60, height: 60, mr: 2 }}>
+                      <Avatar
+                        src={comic.coverImage}
+                        variant="rounded"
+                        sx={{ width: 60, height: 60 }}
+                      />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        <Typography variant="h6" component="div">
+                          {comic.title}
                         </Typography>
-                        <Rating value={comic.rating} readOnly size="small" />
-                      </Box>
-                    }
-                  />
-                </ListItem>
-              </Paper>
-            ))}
-            {comicsList.length === 0 && (
-              <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
-                No comics found.
-              </Typography>
-            )}
-          </List>
+                      }
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                            {comic.author}
+                          </Typography>
+                          <Rating value={comic.rating} readOnly size="small" />
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                </Paper>
+              ))}
+              {comicsList.length === 0 && (
+                <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
+                  No comics found.
+                </Typography>
+              )}
+            </List>
+          </>
         )}
       </Paper>
     </Box>

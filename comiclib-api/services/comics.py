@@ -29,6 +29,23 @@ def get_comics():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@comics_bp.route('/comics/<int:comic_id>', methods=['GET'])
+def get_comic_by_id(comic_id):
+    try:
+        data = comic_service.get_comic_by_id(comic_id)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@comics_bp.route('/comics/<int:comic_id>', methods=['PUT'])
+def update_comic(comic_id):
+    try:
+        data = request.json
+        result = comic_service.update_comic(comic_id, data)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @comics_bp.route('/comics', methods=['POST'])
 def add_comic():
     try:

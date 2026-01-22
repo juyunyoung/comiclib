@@ -22,9 +22,14 @@ const en = {
     upload: 'Upload Cover Image',
     imageUrlLabel: 'Image URL',
     submit: 'Add Friend House',
+    submitUpdate: "Edit Friend's House",
+    submitAdd: "Add Friend's House",
   },
   registerPage: {
     title: 'New Friend',
+  },
+  searchPage: {
+    title: "Search Friend's House",
   },
   detailPage: {
     loading: 'Loading...',

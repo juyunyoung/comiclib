@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { TextField, Button, Rating, Box } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
 
-const ComicForm = ({ initialData, onSubmit }) => {
+const ComicForm = ({ initialData, onSubmit, submitLabel }) => {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [review, setReview] = useState('');
@@ -15,9 +15,10 @@ const ComicForm = ({ initialData, onSubmit }) => {
     if (initialData) {
       setTitle(initialData.title || '');
       setAuthor(initialData.author || '');
-      setReview(initialData.description || '');
-      if (initialData.image) {
-        setCoverImage(initialData.image);
+      setReview(initialData.review || initialData.description || '');
+      if (initialData.rating) setRating(initialData.rating);
+      if (initialData.image || initialData.coverImage) {
+        setCoverImage(initialData.image || initialData.coverImage);
       }
     }
   }, [initialData]);
@@ -79,7 +80,7 @@ const ComicForm = ({ initialData, onSubmit }) => {
         fullWidth
         sx={{ mt: 2, mb: 4, display: 'block', fontSize: '1.2rem', py: 1.5, fontWeight: 'bold' }}
       >
-        {t('comicForm.submit')}
+        {submitLabel || t('comicForm.submit')}
       </Button>
     </form>
   );

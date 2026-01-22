@@ -4,9 +4,10 @@ import { Container } from '@mui/material';
 import Nevigation from './components/Nevigation';
 import HomePage from './pages/HomePage';
 import RegisterPage from './pages/RegisterPage';
-import DetailPage from './pages/DetailPage';
+import HomeDetail from './pages/HomeDetail';
 import StatsPage from './pages/StatsPage';
 import FourCutPage from './pages/FourCutPage';
+import SearchPage from './pages/SearchPage';
 
 function App() {
   return (
@@ -16,8 +17,9 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/detail/:id" element={<DetailPage />} />
+            <Route path="/detail/:id" element={<HomeDetail />} />
             <Route path="/stats" element={<StatsPage />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/four-cut" element={<FourCutPage />} />
           </Routes>
         </Container>
