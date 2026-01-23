@@ -6,6 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 
 const StatsPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const location = useLocation();
   const [rankedCharacters, setRankedCharacters] = useState([]);
   const [comicsList, setComicsList] = useState([]);
@@ -19,8 +20,12 @@ const StatsPage = () => {
   };
 
   useEffect(() => {
-    fetchCharacters();
-  }, []);
+    if (tabValue === 0) {
+      fetchCharacters();
+    } else if (tabValue === 1) {
+      fetchComics();
+    }
+  }, [tabValue]);
 
   const fetchCharacters = async () => {
     try {
@@ -37,7 +42,8 @@ const StatsPage = () => {
         title: item.charactor_name,
         author: item.comics?.title || 'Unknown Comic',
         rating: item.comics?.rating || 0,
-        coverImage: item.comics?.coverImage || 'https://via.placeholder.com/150?text=No+Image'
+        coverImage: item.comics?.coverImage || 'https://via.placeholder.com/150?text=No+Image',
+        comicId: item.comics?.id
       }));
 
       setRankedCharacters(formattedData);
@@ -152,21 +158,17 @@ const StatsPage = () => {
                 <ListItem
                   alignItems="flex-start"
                   secondaryAction={
-                    <IconButton edge="end" aria-label="edit" onClick={() => navigate('/register', { state: { editMode: true, data: char } })}>
+                    <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${char.comicId}`, { state: { activeTab: tabValue } })}>
                       <EditIcon />
                     </IconButton>
                   }
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, minWidth: 30 }}>
-                    <Typography variant="h5" color="primary" fontWeight="bold">
-                      #{index + 1}
-                    </Typography>
-                  </Box>
-                  <ListItemAvatar sx={{ width: 60, height: 60, mr: 2 }}>
+
+                  <ListItemAvatar sx={{ width: 75, height: 75, mr: 2 }}>
                     <Avatar
                       src={char.coverImage}
                       variant="rounded"
-                      sx={{ width: 60, height: 60 }}
+                      sx={{ width: 75, height: 75 }}
                     />
                   </ListItemAvatar>
                   <ListItemText
@@ -183,6 +185,7 @@ const StatsPage = () => {
                         <Rating value={char.rating} readOnly size="small" />
                       </Box>
                     }
+                    secondaryTypographyProps={{ component: 'div' }}
                   />
                 </ListItem>
               </Paper>
@@ -217,7 +220,7 @@ const StatsPage = () => {
                   <ListItem
                     alignItems="flex-start"
                     secondaryAction={
-                      <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } })}>
+                      <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/home-detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } })}>
                         <EditIcon />
                       </IconButton>
                     }
@@ -243,6 +246,7 @@ const StatsPage = () => {
                           <Rating value={comic.rating} readOnly size="small" />
                         </Box>
                       }
+                      secondaryTypographyProps={{ component: 'div' }}
                     />
                   </ListItem>
                 </Paper>

@@ -1,23 +1,182 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import CharacterRanking from '../components/CharacterRanking';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import ComicForm from '../components/ComicForm';
 import { useTranslation } from '../context/LanguageContext';
+import { Button, Box } from '@mui/material';
 
 const DetailPage = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [comic, setComic] = useState(null);
+  const [characters, setCharacters] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newCharName, setNewCharName] = useState('');
   const { t } = useTranslation();
 
   useEffect(() => {
-    const fetchComic = async () => {
-      const docRef = doc(db, 'comics', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setComic({ id: docSnap.id, ...docSnap.data() });
+    if (location.state?.editMode) {
+      setIsEditMode(false); // Should this be true? 
+      // HomeDetail had: if (location.state?.editMode) { setIsEditMode(false); } 
+      // Wait, if editMode is passed as true, why set it to false?
+      // Step 913 lines 19-21:
+      // if (location.state?.editMode) { setIsEditMode(false); }
+      // This looks like a bug in HomeDetail or intentional override?
+      // StatsPage passes editMode: true.
+      // If I want to START in edit mode, I should set it to true.
+      // Maybe HomeDetail wanted to prevent auto-edit?
+      // Or maybe it was a mistake in HomeDetail I should fix?
+      // Let's assume the user WANTS to edit if passed editMode: true.
+      // I will set it to true if location.state.editMode is true.
+      if (location.state?.editMode) {
+        setIsEditMode(true);
       }
-    };
-    fetchComic();
+    }
+  }, [location.state]);
+
+  const fetchComic = async () => {
+    try {
+      const response = await fetch(`/api/comics/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch comic');
+      }
+      const data = await response.json();
+      setComic(data);
+    } catch (error) {
+      console.error("Error fetching comic detail:", error);
+    }
+  };
+
+  const fetchCharacters = async () => {
+    try {
+      const response = await fetch(`/api/comics/user-characters?user_id=juyunyoung&comics_id=${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCharacters(data);
+      }
+    } catch (error) {
+      console.error("Error fetching characters:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchComic();
+      fetchCharacters();
+    }
   }, [id]);
+
+  const handleEditClick = async () => {
+    await fetchComic(); // Fetch fresh data
+    setIsEditMode(true);
+  };
+
+  const handleAddClick = () => {
+    setIsAdding(true);
+  };
+
+  const handleCharInputKeyDown = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!newCharName.trim()) {
+        setIsAdding(false);
+        return;
+      }
+      await saveNewCharacter(newCharName);
+    } else if (e.key === 'Escape') {
+      setIsAdding(false);
+      setNewCharName('');
+    }
+  };
+
+  const saveNewCharacter = async (name) => {
+    try {
+      const response = await fetch('/api/comics/character', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'juyunyoung',
+          comics_id: id,
+          charactor_name: name,
+          note: ''
+        })
+      });
+
+      if (response.ok) {
+        setNewCharName('');
+        setIsAdding(false);
+        fetchCharacters(); // Refresh list
+      } else {
+        alert("Failed to add character");
+      }
+    } catch (error) {
+      console.error("Error adding character:", error);
+      alert("Error adding character");
+    }
+  };
+
+  const handleDeleteCharacter = async (charId, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this character?")) return;
+
+    try {
+      const response = await fetch(`/api/comics/character/${charId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchCharacters(); // Refresh list
+      } else {
+        alert("Failed to delete character");
+      }
+    } catch (error) {
+      console.error("Error deleting character:", error);
+      alert("Error deleting character");
+    }
+  };
+
+  const handleUpdate = async (updatedData) => {
+    try {
+      let imageUrl = updatedData.coverImage;
+
+      if (updatedData.file instanceof File) {
+        const formData = new FormData();
+        formData.append('file', updatedData.file);
+        const uploadResponse = await fetch('/api/comics/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!uploadResponse.ok) throw new Error('Image upload failed');
+        const uploadResult = await uploadResponse.json();
+        imageUrl = uploadResult.url;
+      }
+
+      const payload = {
+        ...updatedData,
+        coverImage: imageUrl,
+        file: undefined
+      };
+
+      const response = await fetch(`/api/comics/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('Failed to update comic');
+
+      const result = await response.json();
+      const updated = Array.isArray(result) ? result[0] : result;
+      setComic(updated);
+      setIsEditMode(false);
+      alert('Successfully updated!');
+
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert('Update failed: ' + error.message);
+    }
+  };
 
   if (!comic) {
     return <div>{t('detailPage.loading')}</div>;
@@ -25,12 +184,154 @@ const DetailPage = () => {
 
   return (
     <div>
-      <h1>{comic.title}</h1>
-      <p>{t('detailPage.author')}: {comic.author}</p>
-      <p>{t('detailPage.rating')}: {comic.rating} / 5</p>
-      <p>{t('detailPage.review')}: {comic.review}</p>
-      <img src={comic.coverImage} alt={comic.title} style={{ width: '200px' }} />
-      <CharacterRanking comicId={id} />
+      {isEditMode ? (
+        <>
+          <h1>Edit Comic</h1>
+          <ComicForm initialData={comic} onSubmit={handleUpdate} submitLabel={t('comicForm.submitUpdate')} />
+          <Button onClick={() => setIsEditMode(false)} sx={{ mt: 2 }} variant="outlined" color="error">Cancel</Button>
+        </>
+      ) : (
+        <>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/stats', { state: { activeTab: location.state?.activeTab || 0 } })}
+            sx={{ mb: 2 }}
+          >
+            &larr; {t('detailPage.backToList') || "Back to List"}
+          </Button>
+          <h1>{comic.title}</h1>
+          <p>{t('detailPage.author')}: {comic.author}</p>
+          <p>{t('detailPage.rating')}: {comic.rating} / 5</p>
+          <p>{t('detailPage.review')}: {comic.review}</p>
+          <img src={comic.coverImage} alt={comic.title} style={{ width: '200px' }} />
+
+          <Button variant="contained" onClick={handleEditClick} sx={{ display: 'block', my: 2 }}>
+            Edit
+          </Button>
+
+          <Box sx={{ mt: 4 }}>
+            <h3>Characters</h3>
+            {characters.length > 0 ? (
+              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {characters.map((char, index) => (
+                  <li key={index} style={{
+                    padding: '8px 16px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '20px',
+                    backgroundColor: '#f9f9f9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 'fit-content',
+                    gap: '8px'
+                  }}>
+                    <strong>{char.charactor_name}</strong>
+                    <span
+                      onClick={(e) => handleDeleteCharacter(char.charactor_id, e)}
+                      style={{
+                        color: 'red',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontSize: '1em',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        lineHeight: 1,
+                        marginLeft: '4px'
+                      }}
+                    >
+                      -
+                    </span>
+                  </li>
+                ))}
+
+                {isAdding && (
+                  <li style={{
+                    padding: '8px 16px',
+                    border: '1px solid #1976d2',
+                    borderRadius: '20px',
+                    backgroundColor: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 'fit-content'
+                  }}>
+                    <input
+                      value={newCharName}
+                      onChange={(e) => setNewCharName(e.target.value)}
+                      onKeyDown={handleCharInputKeyDown}
+                      autoFocus
+                      placeholder="Name"
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        width: '10ch',
+                        fontSize: 'inherit',
+                        fontWeight: 'bold',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                  </li>
+                )}
+
+                <li onClick={handleAddClick} style={{
+                  padding: '8px 16px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '20px',
+                  backgroundColor: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 'fit-content',
+                  color: '#1976d2',
+                  fontWeight: 'bold'
+                }}>
+                  +
+                </li>
+              </ul>
+            ) : (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <p style={{ margin: 0 }}>No characters registered.</p>
+
+                {isAdding ? (
+                  <div style={{
+                    padding: '4px 8px',
+                    border: '1px solid #1976d2',
+                    borderRadius: '20px',
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <input
+                      value={newCharName}
+                      onChange={(e) => setNewCharName(e.target.value)}
+                      onKeyDown={handleCharInputKeyDown}
+                      autoFocus
+                      placeholder="Name"
+                      style={{
+                        border: 'none',
+                        outline: 'none',
+                        width: '10ch',
+                        fontSize: '0.9em'
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <button onClick={handleAddClick} style={{
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    border: '1px solid #1976d2',
+                    background: 'white',
+                    color: '#1976d2',
+                    cursor: 'pointer'
+                  }}>+</button>
+                )}
+              </div>
+            )}
+          </Box>
+        </>
+      )}
     </div>
   );
 };
