@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../context/LanguageContext';
 import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography, Box, Rating, Paper, Tabs, Tab, IconButton, TextField, Button } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 
 const StatsPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const location = useLocation();
   const [rankedCharacters, setRankedCharacters] = useState([]);
   const [comicsList, setComicsList] = useState([]);
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(location.state?.activeTab || 0);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = () => {
@@ -217,7 +217,7 @@ const StatsPage = () => {
                   <ListItem
                     alignItems="flex-start"
                     secondaryAction={
-                      <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${comic.id}`, { state: { editMode: true, data: comic } })}>
+                      <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } })}>
                         <EditIcon />
                       </IconButton>
                     }

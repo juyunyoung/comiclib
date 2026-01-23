@@ -66,6 +66,15 @@ def add_comic_character():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@comics_bp.route('/comics/character/<int:character_id>', methods=['DELETE'])
+def delete_comic_character(character_id):
+    try:
+        print(character_id)
+        result = comic_service.delete_comic_character(character_id)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @comics_bp.route('/comics/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -108,13 +117,15 @@ def search_comics():
         return jsonify({"error": str(e)}), 500
 
 @comics_bp.route('/comics/user-characters', methods=['GET'])
-def get_characters_with_comic_info():
+def get_characters_info():
     try:
         user_id = request.args.get('user_id')
+        comics_id = request.args.get('comics_id')
+        
         if not user_id:
              return jsonify({'error': 'user_id is required'}), 400
              
-        data = comic_service.get_characters_with_comic_info(user_id)
+        data = comic_service.get_characters_info(user_id, comics_id)
         print(data)
         return jsonify(data), 200
     except Exception as e:
