@@ -3,34 +3,34 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1. APP ¿ÃπÃ¡ˆ ∫ÙµÂ
+  # 1. APP Ïù¥ÎØ∏ÏßÄ ÎπåÎìú
   - name: gcr.io/cloud-builders/docker
     args:
       [
         "build",
         "-t",
-        "gcr.io/$PROJECT_ID/comic-app",
-        "./comic-app"
+        "gcr.io/$PROJECT_ID/comiclib-app",
+        "./comiclib-app"
       ]
 
-  # 2. APP ¿ÃπÃ¡ˆ «™Ω√
+  # 2. APP Ïù¥ÎØ∏ÏßÄ Ìë∏Ïãú
   - name: gcr.io/cloud-builders/docker
     args:
       [
         "push",
-        "gcr.io/$PROJECT_ID/comic-app"
+        "gcr.io/$PROJECT_ID/comiclib-app"
       ]
 
-  # 3. Cloud Run πË∆˜
+  # 3. Cloud Run Î∞∞Ìè¨
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
       [
         "run",
         "deploy",
-        "comic-app",
+        "comiclib-app",
         "--image",
-        "gcr.io/$PROJECT_ID/comic-app",
+        "gcr.io/$PROJECT_ID/comiclib-app",
         "--region",
         "asia-northeast3",
         "--platform",
@@ -39,4 +39,5 @@ steps:
       ]
 
 images:
-  - gcr.io/$PROJECT_ID/comic-app
+
+  - gcr.io/$PROJECT_ID/comiclib-app
