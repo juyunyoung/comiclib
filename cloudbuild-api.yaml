@@ -1,6 +1,9 @@
 # cloudbuild-api.yaml
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 steps:
-  # 1. API ÀÌ¹ÌÁö ºôµå
+  # 1. API ì´ë¯¸ì§€ ë¹Œë“œ
   - name: gcr.io/cloud-builders/docker
     args:
       [
@@ -10,7 +13,7 @@ steps:
         "./comic-api"
       ]
 
-  # 2. API ÀÌ¹ÌÁö Çª½Ã
+  # 2. API ì´ë¯¸ì§€ í‘¸ì‹œ
   - name: gcr.io/cloud-builders/docker
     args:
       [
@@ -18,7 +21,7 @@ steps:
         "gcr.io/$PROJECT_ID/comic-api"
       ]
 
-  # 3. Cloud Run ¹èÆ÷
+  # 3. Cloud Run ë°°í¬
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
@@ -36,4 +39,5 @@ steps:
       ]
 
 images:
+
   - gcr.io/$PROJECT_ID/comic-api
