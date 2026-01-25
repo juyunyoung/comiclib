@@ -32,7 +32,7 @@ const HomePage = () => {
           sx={{ width: '50%' }}
         />
         <Button variant="contained" onClick={handleSearch} size="large">
-          {t('home.searchLabel') || '검색'}
+          {t('home.searchLabel')}
         </Button>
       </Box>
       {/* Replaced SimpleStats with EventList */}

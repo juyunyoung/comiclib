@@ -49,6 +49,16 @@ class ComicService:
         response = self.supabase.table("comic_charactor").delete().eq("id", character_id).execute()
         return response.data
 
+    def get_character_by_id(self, character_id: int):
+        """Fetch a single character by ID."""
+        response = self.supabase.table("comic_charactor").select("*").eq("id", character_id).single().execute()
+        return response.data
+
+    def update_comic_character(self, character_id: int, updates: dict):
+        """Update a comic character by ID."""
+        response = self.supabase.table("comic_charactor").update(updates).eq("id", character_id).execute()
+        return response.data
+
     def get_characters_info(self, user_id: str, comics_id: int = None):
         """
         Fetch characters with their associated comic info.
@@ -56,7 +66,7 @@ class ComicService:
         Since foreign key relationship might be missing, we do a manual join.
         """
         # 1. Fetch characters for the user
-        query = self.supabase.table("comic_charactor").select("*").eq("user_id", user_id)
+        query = self.supabase.table("comic_charactor").select("*").eq("user_id", user_id).order("affinity", desc=True)
         
         if comics_id:
             query = query.eq("comics_id", comics_id)
@@ -87,7 +97,7 @@ class ComicService:
             
             # Construct the format expected by frontend (or flat, but frontend expects nested 'comics')
             char_data = {
-                "charactor_name": char.get('charactor_name'),
+                **char,
                 "charactor_id": char.get('id'),
                 "comics": comic_info if comic_info else {}
             }

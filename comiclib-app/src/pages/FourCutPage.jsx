@@ -35,7 +35,7 @@ const FourCutPage = () => {
 
   const handleGenerate = async () => {
     if (!myPhoto || !charPhoto) {
-      alert('Please upload both photos!');
+      alert(t('fourCutPage.alertBothPhotos'));
       return;
     }
 
@@ -53,7 +53,7 @@ const FourCutPage = () => {
 
       // Call the comiclib-api backend
       // Using environment variable for API URL
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5500';
       const response = await fetch(`${apiUrl}/api/makePhoto`, {
         method: 'POST',
         body: formData,
@@ -77,7 +77,7 @@ const FourCutPage = () => {
 
     } catch (err) {
       console.error("AI Generation Error:", err);
-      setError(err.message || 'Something went wrong');
+      setError(err.message || t('fourCutPage.generateError'));
       alert(`Error: ${err.message}`);
     } finally {
       setLoading(false);
@@ -136,11 +136,11 @@ const FourCutPage = () => {
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <Typography color="text.secondary">No Image</Typography>
+          <Typography color="text.secondary">{t('fourCutPage.noImage')}</Typography>
         )}
       </Paper>
       <Button variant="contained" component="label" fullWidth>
-        Select Photo
+        {t('fourCutPage.selectPhoto')}
         <input
           type="file"
           hidden
@@ -161,13 +161,13 @@ const FourCutPage = () => {
                   return;
                 } catch (error) {
                   console.error('HEIC conversion failed:', error);
-                  alert('Failed to process HEIC file. Please try another format.');
+                  alert(t('fourCutPage.errorHeic'));
                   return;
                 }
               }
 
               if (!selectedFile.type.startsWith('image/')) {
-                alert('Please upload an image file (e.g., JPG, PNG).');
+                alert(t('fourCutPage.errorImageFormat'));
                 return;
               }
               setFile(selectedFile);
@@ -204,15 +204,15 @@ const FourCutPage = () => {
       {/* Keyword Inputs */}
       <Box sx={{ display: 'flex', gap: 2, mb: 4, flexDirection: { xs: 'column', sm: 'row' } }}>
         <TextField
-          label="키워드 1 (예: 동작)"
-          placeholder="어깨동무"
+          label={t('fourCutPage.keyword1Label')}
+          placeholder={t('fourCutPage.keyword1Placeholder')}
           fullWidth
           value={keyword1}
           onChange={(e) => setKeyword1(e.target.value)}
         />
         <TextField
-          label="키워드 2 (예: 표정/분위기)"
-          placeholder="환하게 웃는"
+          label={t('fourCutPage.keyword2Label')}
+          placeholder={t('fourCutPage.keyword2Placeholder')}
           fullWidth
           value={keyword2}
           onChange={(e) => setKeyword2(e.target.value)}
@@ -251,7 +251,7 @@ const FourCutPage = () => {
               color="primary"
               onClick={handleSave}
             >
-              이미지 저장
+              {t('fourCutPage.saveImage')}
             </Button>
           </Box>
         </Box>

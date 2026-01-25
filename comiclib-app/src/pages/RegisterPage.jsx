@@ -184,7 +184,7 @@ const RegisterPage = () => {
         }
       }
 
-      alert('성공적으로 저장되었습니다!');
+      alert(t('registerPage.saveSuccess'));
 
       // Reset page state
       setQuery('');
@@ -198,24 +198,24 @@ const RegisterPage = () => {
 
     } catch (error) {
       console.error('Save error:', error);
-      alert(`저장 실패: ${error.message}`);
+      alert(`${t('registerPage.saveFail')}${error.message}`);
       return false;
     }
   };
 
   return (
     <div>
-      <h1>{location.state?.editMode ? 'Edit Friend' : t('registerPage.title')}</h1>
+      <h1>{location.state?.editMode ? t('registerPage.editTitle') : t('registerPage.title')}</h1>
 
       <Box sx={{ mb: 4, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
         <Typography variant="h6" gutterBottom>
-          {t('home.searchLabel') || '친구 검색'}
+          {t('home.searchLabel')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <TextField
             id="book-search-query"
             name="book-search-query"
-            label="제목으로 검색"
+            label={t('home.searchLabel')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             size="small"
@@ -230,7 +230,7 @@ const RegisterPage = () => {
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
           <Button variant="contained" onClick={handleSearch} disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : '검색'}
+            {loading ? <CircularProgress size={24} /> : t('registerPage.searchButton')}
           </Button>
         </Box>
 
@@ -256,7 +256,7 @@ const RegisterPage = () => {
         ) : (
           hasSearched && !loading && (
             <Typography variant="body1" color="text.secondary" align="center" sx={{ mt: 4 }}>
-              검색된 내용이 없습니다.
+              {t('registerPage.noResults')}
             </Typography>
           )
         )}
@@ -266,11 +266,11 @@ const RegisterPage = () => {
         {isCharacterLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
             <CircularProgress size={24} sx={{ mr: 1 }} />
-            <Typography>캐릭터 정보 찾는 중...</Typography>
+            <Typography>{t('registerPage.loadingCharacters')}</Typography>
           </Box>
         ) : characters.length > 0 ? (
           <Box>
-            <Typography variant="h6" gutterBottom>등장 캐릭터 (클릭하여 선택)</Typography>
+            <Typography variant="h6" gutterBottom>{t('registerPage.selectCharacter')}</Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {characters.map((char, index) => {
                 const isSelected = selectedCharacters.includes(char.name);
@@ -301,7 +301,7 @@ const RegisterPage = () => {
         ) : null}
       </Box>
 
-      <ComicForm initialData={selectedBook} onSubmit={handleSave} submitLabel="친구집 추가" />
+      <ComicForm initialData={selectedBook} onSubmit={handleSave} submitLabel={t('comicForm.submitAdd')} />
     </div>
   );
 };

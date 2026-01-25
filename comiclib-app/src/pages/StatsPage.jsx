@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from '../context/LanguageContext';
 import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography, Box, Rating, Paper, Tabs, Tab, IconButton, TextField, Button } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
 const StatsPage = () => {
   const { t } = useTranslation();
@@ -40,10 +42,12 @@ const StatsPage = () => {
       const formattedData = data.map((item, index) => ({
         id: `char-${index}`,
         title: item.charactor_name,
-        author: item.comics?.title || 'Unknown Comic',
-        rating: item.comics?.rating || 0,
-        coverImage: item.comics?.coverImage || 'https://via.placeholder.com/150?text=No+Image',
-        comicId: item.comics?.id
+        // Use photo_url if available, else comic cover, else placeholder
+        coverImage: item.photo_url || item.comics?.coverImage || 'https://via.placeholder.com/150?text=No+Image',
+        comicId: item.comics?.id,
+        charId: item.charactor_id,
+        affinity: item.affinity || 0,
+        note: item.note
       }));
 
       setRankedCharacters(formattedData);
@@ -158,7 +162,7 @@ const StatsPage = () => {
                 <ListItem
                   alignItems="flex-start"
                   secondaryAction={
-                    <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${char.comicId}`, { state: { activeTab: tabValue } })}>
+                    <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${char.charId}`, { state: { activeTab: tabValue } })}>
                       <EditIcon />
                     </IconButton>
                   }
@@ -179,10 +183,26 @@ const StatsPage = () => {
                     }
                     secondary={
                       <Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                          {char.author}
-                        </Typography>
-                        <Rating value={char.rating} readOnly size="small" />
+                        {/* Display Affinity (Ho-gam-do) */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                          <Typography variant="body2" sx={{ mr: 1, fontWeight: 'bold', color: 'text.secondary' }}>
+                            {t('detailPage.affinity')}:
+                          </Typography>
+                          <Rating
+                            value={char.affinity}
+                            readOnly
+                            size="small"
+                            icon={<FavoriteIcon fontSize="inherit" color="error" />}
+                            emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                          />
+                        </Box>
+
+                        {/* Display Note */}
+                        {char.note && (
+                          <Typography variant="body2" color="text.secondary" sx={{ display: 'block', whiteSpace: 'pre-wrap' }}>
+                            {char.note.length > 50 ? char.note.substring(0, 50) + '...' : char.note}
+                          </Typography>
+                        )}
                       </Box>
                     }
                     secondaryTypographyProps={{ component: 'div' }}
@@ -192,7 +212,7 @@ const StatsPage = () => {
             ))}
             {rankedCharacters.length === 0 && (
               <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
-                No characters registered yet.
+                {t('statsPage.noCharacters')}
               </Typography>
             )}
           </List>
@@ -205,13 +225,13 @@ const StatsPage = () => {
                 fullWidth
                 size="small"
                 variant="outlined"
-                placeholder={t('home.searchLabel') || "Search..."}
+                placeholder={t('statsPage.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
               <Button variant="contained" onClick={handleSearch} disabled={!searchQuery.trim()}>
-                {t('home.searchLabel') || "Search"}
+                {t('statsPage.searchButton')}
               </Button>
             </Box>
             <List>
@@ -253,7 +273,7 @@ const StatsPage = () => {
               ))}
               {comicsList.length === 0 && (
                 <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
-                  No comics found.
+                  {t('statsPage.noComics')}
                 </Typography>
               )}
             </List>

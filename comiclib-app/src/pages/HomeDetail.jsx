@@ -173,9 +173,9 @@ const HomeDetail = () => {
     <div>
       {isEditMode ? (
         <>
-          <h1>Edit Comic</h1>
+          <h1>{t('detailPage.editComic')}</h1>
           <ComicForm initialData={comic} onSubmit={handleUpdate} submitLabel={t('comicForm.submitUpdate')} />
-          <Button onClick={() => setIsEditMode(false)} sx={{ mt: 2 }} variant="outlined" color="error">Cancel</Button>
+          <Button onClick={() => setIsEditMode(false)} sx={{ mt: 2 }} variant="outlined" color="error">{t('comicForm.cancel')}</Button>
         </>
       ) : (
         <>
@@ -184,7 +184,7 @@ const HomeDetail = () => {
             onClick={() => navigate('/stats', { state: { activeTab: location.state?.activeTab || 0 } })}
             sx={{ mb: 2 }}
           >
-            &larr; {t('detailPage.backToList') || "Back to List"}
+            &larr; {t('detailPage.backToList')}
           </Button>
           <h1>{comic.title}</h1>
           <p>{t('detailPage.author')}: {comic.author}</p>
@@ -193,11 +193,11 @@ const HomeDetail = () => {
           <img src={comic.coverImage} alt={comic.title} style={{ width: '200px' }} />
 
           <Button variant="contained" onClick={handleEditClick} sx={{ display: 'block', my: 2 }}>
-            Edit
+            {t('detailPage.edit')}
           </Button>
 
           <Box sx={{ mt: 4 }}>
-            <h3>Characters</h3>
+            <h3>{t('detailPage.friendInfo')}</h3>
             {characters.length > 0 ? (
               <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {characters.map((char, index) => (
@@ -279,7 +279,7 @@ const HomeDetail = () => {
               </ul>
             ) : (
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <p style={{ margin: 0 }}>No characters registered.</p>
+                <p style={{ margin: 0 }}>{t('detailPage.noCharacters')}</p>
 
                 {isAdding ? (
                   <div style={{
