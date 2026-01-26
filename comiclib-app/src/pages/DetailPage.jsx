@@ -21,6 +21,7 @@ const DetailPage = () => {
   const [note, setNote] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
+  const [isNewsMember, setIsNewsMember] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -42,6 +43,7 @@ const DetailPage = () => {
       setAffinity(data.affinity || 0);
       setNote(data.note || '');
       setPhotoUrl(data.photo_url || '');
+      setIsNewsMember(data.news_list === 'Y');
 
     } catch (error) {
       console.error("Error fetching character:", error);
@@ -72,7 +74,8 @@ const DetailPage = () => {
         charactor_name: name,
         affinity: affinity,
         note: note,
-        photo_url: finalPhotoUrl
+        photo_url: finalPhotoUrl,
+        news_list: isNewsMember ? 'Y' : 'N'
       };
 
       const response = await fetch(`/api/comics/character/${id}`, {
@@ -168,18 +171,30 @@ const DetailPage = () => {
             fullWidth
           />
 
-          {/* Affinity */}
-          <Box>
-            <Typography component="legend">{t('detailPage.affinity')}</Typography>
-            <Rating
-              name="affinity"
-              value={affinity}
-              onChange={(event, newValue) => {
-                setAffinity(newValue);
-              }}
-              icon={<FavoriteIcon fontSize="inherit" color="error" />}
-              emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-            />
+          {/* Affinity and News List */}
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+            <Box>
+              <Typography component="legend">{t('detailPage.affinity')}</Typography>
+              <Rating
+                name="affinity"
+                value={affinity}
+                onChange={(event, newValue) => {
+                  setAffinity(newValue);
+                }}
+                icon={<FavoriteIcon fontSize="inherit" color="error" />}
+                emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+              />
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography component="legend">{t('detailPage.newsList')}</Typography>
+              <input
+                type="checkbox"
+                checked={isNewsMember}
+                onChange={(e) => setIsNewsMember(e.target.checked)}
+                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+              />
+            </Box>
           </Box>
 
           {/* Note */}

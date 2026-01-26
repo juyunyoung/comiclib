@@ -59,6 +59,7 @@ const ko = {
     note: '메모',
     updateSuccess: '성공적으로 수정되었습니다!',
     updateFail: '수정 실패: ',
+    newsList: '뉴스 리스트',
   },
   characterRanking: {
     title: '캐릭터 랭킹',

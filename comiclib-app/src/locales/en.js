@@ -59,6 +59,7 @@ const en = {
     note: 'Note',
     updateSuccess: 'Successfully updated!',
     updateFail: 'Update failed: ',
+    newsList: 'News List',
   },
   characterRanking: {
     title: 'Friend Ranking',
