@@ -104,3 +104,36 @@ class ComicService:
             result.append(char_data)
             
         return result
+
+    def get_news_list_data(self, user_id: str):
+        """
+        Fetch data for news list where user_id matches and news_list is 'Y'.
+        Equivalent to SQL:
+        select b.title, b.rating, a.charactor_name 
+        from comic_charactor a, comics b
+        where a.user_id = b.user_id
+        and a.comics_id = b.id
+        and a.user_id = :user_id
+        and a.news_list = 'Y'
+        """
+        # Using Supabase embedding (joins)
+        # We select from comic_charactor (a) and join comics (b)
+        # 'comics!inner' forces an inner join (like a.comics_id = b.id)
+        # Filters are applied on comic_charactor
+        response = self.supabase.table("comic_charactor")\
+            .select("charactor_name, comics!inner(title)")\
+            .eq("user_id", user_id)\
+            .eq("news_list", "Y")\
+            .execute()
+            
+        return response.data
+
+    def get_photo_info_by_id(self, id: int):
+        """Fetch photo_info by id (character id)."""
+        response = self.supabase.table("photo_info").select("*").eq("id", id).single().execute()
+        return response.data
+
+    def delete_photo_info_by_id(self, id: int):
+        """Delete photo_info by id (character id)."""
+        response = self.supabase.table("photo_info").delete().eq("id", id).execute()
+        return response.data

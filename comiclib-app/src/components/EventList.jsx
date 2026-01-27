@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Card, CardContent, Typography, Button, CircularProgress, Alert } from '@mui/material';
 
 const EventList = ({ query }) => {
+
   const [items, setItems] = useState([]);
   const [agentResponse, setAgentResponse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -15,6 +16,7 @@ const EventList = ({ query }) => {
       setAgentResponse(null);
 
       try {
+
         if (query) {
           // --- Search Mode (Using comiclib-api) ---
           const response = await fetch(`/api/searchInfo?query=${encodeURIComponent(query)}`);
@@ -30,16 +32,17 @@ const EventList = ({ query }) => {
           setItems(data.sources || []);
 
         } else {
-          // --- Default News Mode (Using comiclib-api) ---
-          const response = await fetch('/api/news');
+          // --- Default News Mode (Using Comprehensive Search) ---
+          // TODO: user_id should be dynamic, but hardcoded for now as requested/context implies 'juyunyoung'
+          const response = await fetch('/api/search/comprehensive?user_id=juyunyoung');
 
           if (!response.ok) {
             throw new Error(`News Fetch Failed: ${response.status}`);
           }
 
           const data = await response.json();
-          // The backend returns a list of items directly
-          setItems(data);
+          // data format: { items: [ { category, title, link, content, date } ] }
+          setItems(data.items || []);
         }
 
       } catch (err) {
@@ -92,26 +95,40 @@ const EventList = ({ query }) => {
       {/* Show List of Items (News or Citations) */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {items.length > 0 ? items.map((item, index) => {
-          // Differentiate between News Item (has date/description) and Source Item (has type)
+          // Differentiate between News Item (from Comprehensive Search) and Source Item (Search Info)
+          // SearchInfo: { title, url, type }
+          // Comprehensive: { category, title, link, content, date }
+
           const isSource = Boolean(item.type);
+          const isComprehensive = Boolean(item.category);
 
           return (
             <Card key={index} sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: 1 }}>
               <CardContent>
-                <Typography variant="h6" component="div">
+                {/* Category for Comprehensive Items */}
+                {isComprehensive && (
+                  <Typography variant="overline" display="block" color="primary" sx={{ fontWeight: 'bold' }}>
+                    {item.category}
+                  </Typography>
+                )}
+
+                <Typography variant="h6" component="div" sx={{ lineHeight: 1.3, mb: 1 }}>
                   {item.title}
                 </Typography>
 
                 {!isSource && (
                   <>
-                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                      {item.date}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mb: 2 }}>
-                      {item.description}
+                    {item.date && (
+                      <Typography sx={{ mb: 1, fontSize: '0.875rem' }} color="text.secondary">
+                        {item.date}
+                      </Typography>
+                    )}
+                    <Typography variant="body2" sx={{ mb: 2, whiteSpace: 'pre-wrap' }}>
+                      {item.content || item.description}
                     </Typography>
                   </>
                 )}
+
                 {isSource && (
                   <Typography variant="caption" display="block" sx={{ mb: 1, color: 'primary.main' }}>
                     [{item.type === 'youtube' ? 'YouTube' : 'Web Source'}]
@@ -133,7 +150,7 @@ const EventList = ({ query }) => {
           );
         }) : (
           <Typography>
-            {query ? 'No additional sources found.' : 'No news found at the moment.'}
+            {query ? 'No additional sources found.' : 'No news found for your friends.'}
           </Typography>
         )}
       </Box>

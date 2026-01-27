@@ -222,6 +222,116 @@ def search_character_info():
         return jsonify({"error": f"Gemini Character Agent error: {str(e)}"}), 500
 
 
+# Comprehensive Search Agent
+class SearchInfoItem(BaseModel):
+    category: str = Field(description="Category of the information (e.g., 'Game Website', 'Publisher', 'Event', 'Collab', 'Popup Store', 'Game Sale', 'Release Date')")
+    title: str = Field(description="Title or headline of the information")
+    link: str = Field(description="URL link to the detailed information")
+    content: str = Field(description="Brief summary or content of the information")
+    date: str = Field(description="Date relative to the information if available, otherwise empty string")
+
+class ComprehensiveSearchResponse(BaseModel):
+    items: List[SearchInfoItem]
+
+def get_comprehensive_search_info(user_id, api_key):
+    """
+    Performs a grounded search to find info for characters in user's news list.
+    Categories: Game Website, Publisher, Event, Collab, Popup Store, Game Sale, Release Date.
+    """
+    from services.comic_service import ComicService
+    comic_service = ComicService()
+    
+    # Fetch characters from news list
+    character_data = comic_service.get_news_list_data(user_id)
+    
+    if not character_data:
+         return {"items": []}
+         
+    # Construct a list string for the prompt
+    # format: "CharacterName (ComicTitle)"
+    target_list = []
+    for item in character_data:
+        char_name = item.get('charactor_name', 'Unknown')
+        comic = item.get('comics', {})
+        comic_title = comic.get('title', 'Unknown') if comic else 'Unknown'
+        target_list.append(f"{char_name} (작품: {comic_title})")
+    
+    targets_str = ", ".join(target_list)
+    print(f"Targeting characters: {targets_str}")
+
+    client = genai.Client(api_key=api_key)
+
+    system_instruction = """
+    당신은 서브컬처(게임, 만화, 애니메이션) 정보 수집 전문 AI 에이전트입니다.
+    사용자가 요청한 대상 캐릭터 위주의  최신 소식과 정보를 Google 검색을 통해 수집하여 카테고리별로 정리해주세요.
+    나무위키 싸이트는 제외해주세요
+    
+    [수집 대상 싸이트]
+    0. 최신 소식 (News)
+    1. 게임 홈페이지 (Game Website)
+    2. 만화 출판사 (Publisher)
+    3. 이벤트 사이트 (Event Site)
+    4. 캐릭터 콜라보 소식 (Collab News)
+    5. 팝업 스토어 정보 (Popup Store)
+    6. 게임 판매 소식 (Game Sale)
+    7. 만화책 출판일 (Release Date)
+    
+    각 정보는 제목, 링크(URL), 내용 요약, 날짜(확인 가능한 경우)를 포함해야 합니다.
+    최신 정보를 우선적으로 찾아주세요. 2개월 지난 내용은 제외해 주세요
+    검색 결과는 반드시 한국어로 작성해주세요.
+    
+    응답은 반드시 다음 JSON 형식을 따라주세요. 코드 블록 없이 JSON만 반환하세요.
+    {
+        "items": [
+            {
+                
+                "title": "제목",
+                "link": "URL",
+                "content": "내용 요약",
+                "date": "2024-01-01 등의 날짜 또는 '2024년 1월' 등, 없으면 빈문자열"
+            }
+        ]
+    }
+    """
+
+    import json
+    import re
+
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-exp',
+            contents=f"다음 캐릭터들과 작품에 대한 최신 소식(홈페이지, 이벤트, 콜라보, 굿즈, 출판 등)을 모두 찾아주세요: {targets_str}",
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+            )
+        )
+        
+        text = response.text
+        text = re.sub(r'```json\s*|\s*```', '', text)
+        return json.loads(text)
+    except Exception as e:
+        print(f"Comprehensive Search Agent Error: {e}")
+        return {"items": []}
+
+@search_info_bp.route('/search/comprehensive', methods=['GET'])
+def search_comprehensive_info():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({"error": "user_id parameter is required"}), 400
+
+    api_key = os.environ.get('GEMINI_API_KEY')
+    if not api_key:
+        return jsonify({"error": "Server configuration error: Missing Gemini API Key"}), 500
+
+    try:
+        result = get_comprehensive_search_info(user_id, api_key)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"error": f"Gemini Comprehensive Agent error: {str(e)}"}), 500
+
+
 if __name__ == "__main__":
     import sys
     from dotenv import load_dotenv

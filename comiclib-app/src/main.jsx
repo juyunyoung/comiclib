@@ -8,12 +8,10 @@ import { LanguageProvider } from './context/LanguageContext';
 import theme from './theme';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <LanguageProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <App />
-      </ThemeProvider>
-    </LanguageProvider>
-  </React.StrictMode>,
+  <LanguageProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>
+  </LanguageProvider>,
 );

@@ -148,3 +148,33 @@ def get_characters_info():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+@comics_bp.route('/comics/news-list', methods=['GET'])
+def get_news_list_data():
+    try:
+        user_id = request.args.get('user_id')
+        if not user_id:
+             return jsonify({'error': 'user_id is required'}), 400
+             
+        data = comic_service.get_news_list_data(user_id)
+        jsonify(data), 200
+        return
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@comics_bp.route('/comics/photo-info/<int:id>', methods=['GET'])
+def get_photo_info_by_id(id):
+    try:
+        data = comic_service.get_photo_info_by_id(id)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@comics_bp.route('/comics/photo-info/<int:id>', methods=['DELETE'])
+def delete_photo_info_by_id(id):
+    try:
+        data = comic_service.delete_photo_info_by_id(id)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
