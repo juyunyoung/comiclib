@@ -77,9 +77,6 @@ const EventList = ({ query }) => {
 
   return (
     <Box sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
-        {query ? 'Comic Expert Answer' : '2D Friend News (Google Search)'}
-      </Typography>
 
       {/* Show Agent Text Response if available (Search Mode) */}
       {agentResponse && (

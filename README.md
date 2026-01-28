@@ -11,18 +11,64 @@ ComicLib은 사용자가 읽은 만화책을 기록하고, 간단한 소감과 �
 
 ---
 
+## 🏗 시스템 아키텍처 및 데이터 흐름
+
+### 🏛 시스템 아키텍처 (System Architecture)
+
+전체 시스템은 클라이언트-서버 구조로 설계되었으며, React 프론트엔드와 Flask 백엔드, 그리고 Supabase 데이터베이스로 구성되어 있습니다.
+
+```mermaid
+graph TD
+    Client[Frontend React] -->|API Request| API[Backend Flask Server]
+
+    API -->|SQL Query| DB[(Supabase DB)]
+    API -->|GenAI Request| Gemini[Google Gemini API]
+    DB -->|Data| API
+    Gemini -->|AI Response| API
+    API -->|JSON Response| Client
+```
+
+### 🔄 요청 흐름 (Request Flow)
+
+사용자의 요청(Request)이 클라이언트에서 데이터베이스까지 도달하는 흐름은 다음과 같습니다.
+
+1.  **Client (Frontend)**: 사용자가 브라우저에서 상호작용(예: 만화 목록 조회)을 하면, React 앱이 Flask API 서버로 HTTP 요청을 보냅니다.
+2.  **Server (Backend)**: Flask 서버는 요청을 수신하고 필요한 비즈니스 로직을 수행합니다.
+3.  **Database / AI**:
+    -   데이터 저장이 필요한 경우 **Supabase** 데이터베이스에 쿼리를 실행합니다.
+    -   AI 생성이 필요한 경우 **Google Gemini API**를 호출합니다.
+4.  **Response**: 처리된 결과를 JSON 형식으로 클라이언트에게 반환합니다.
+5.  **Render**: 클라이언트는 받은 데이터를 바탕으로 UI를 업데이트합니다.
+
+```mermaid
+sequenceDiagram
+    participant User as 사용자
+    participant Client as Frontend (React)
+    participant Server as Backend (Flask)
+    participant DB as Supabase (PostgreSQL)
+
+    User->>Client: 페이지 접속/상호작용
+    Client->>Server: API 요청 (예: GET /api/comics)
+    Note over Server: 요청 처리 및 권한 확인
+    Server->>DB: 데이터 조회 (Select/Insert)
+    DB-->>Server: 결과 반환
+    Server-->>Client: JSON 응답
+    Client-->>User: 화면 업데이트
+```
+
+---
+
 ## 🚀 Frontend (`comiclib-app`)
 
 사용자 인터페이스를 담당하는 웹 애플리케이션입니다.
 
 ### 🛠 사용 언어 및 라이브러리
-- **Language**: JavaScript (React)
-- **Framework & Build Tool**: Vite
-- **UI Library**: Material-UI (@mui/material)
-- **Backend/Auth**: Firebase (Authentication, Firestore, Storage)
-- **AI Integration**: Google Generative AI SDK (@google/generative-ai)
-- **Routing**: React Router
-- **Visualization**: Chart.js
+- **JavaScript (React)**: 사용자 인터페이스 구축을 위한 메인 라이브러리입니다. 컴포넌트 기반 아키텍처를 사용하여 재사용성을 높였습니다.
+- **Vite**: 빠른 개발 서버 구동과 최적화된 빌드를 위한 프론트엔드 빌드 툴입니다.
+- **Material-UI (@mui/material)**: 구글의 Material Design을 구현한 리액트 컴포넌트 라이브러리로, 직관적이고 일관된 UI디자인을 제공합니다.
+- **Google Generative AI SDK**: 클라이언트 측에서 AI 모델과 직접 통신해야 할 경우를 위해 통합되었습니다.
+- **React Router**: SPA(Single Page Application) 내에서 페이지 간의 원활한 이동을 처리합니다.
+- **Chart.js**: 사용자의 만화 읽기 통계를 시각화하여 보여주기 위해 사용되었습니다.
 
 ### 🏃‍♂️ 실행 방법
 터미널에서 `comiclib-app` 폴더로 이동 후 다음 명령어를 실행하세요.
@@ -47,11 +93,13 @@ npm run dev
 AI 이미지 합성 및 검색 데이터 처리를 담당하는 백엔드 서버입니다.
 
 ### 🛠 사용 언어 및 라이브러리
-- **Language**: Python
-- **Framework**: Flask
-- **AI/ML**: Google GenAI (Gemini)
-- **Utilities**: Pydantic, Tenacity, Requests
-- **Environment**: Python-dotenv
+- **Python**: 데이터 처리와 AI 모델 연동에 강점이 있는 주 언어입니다.
+- **Flask**: 가볍고 유연한 마이크로 웹 프레임워크로, RESTful API 서버를 구축했습니다.
+- **Supabase**: 오픈소스 Backend-as-a-Service로, PostgreSQL 기반의 관계형 데이터베이스를 제공하며 데이터의 저장 및 조회 기능을 담당합니다.
+- **Google GenAI (Gemini)**: 이미지 합성 및 자연어 처리(검색, 챗봇) 기능을 위해 Google의 생성형 AI 모델인 Gemini를 활용합니다.
+- **Utilities**:
+    - **Pydantic**: 데이터 유효성 검사 및 설정 관리를 위해 사용됩니다.
+    - **Tenacity**: API 호출 실패 시 재시도 로직을 구현하기 위해 사용됩니다.
 
 ### 🏃‍♂️ 실행 방법
 터미널에서 `comiclib-api` 폴더로 이동 후 가상환경을 설정하고 서버를 실행하세요.

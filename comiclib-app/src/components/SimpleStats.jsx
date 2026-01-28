@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../api/firebase';
 import { Typography, Paper } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
 
