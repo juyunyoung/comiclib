@@ -97,6 +97,13 @@ const en = {
     errorHeic: 'Failed to process HEIC file. Please try another format.',
     errorImageFormat: 'Please upload an image file (e.g., JPG, PNG).',
     generateError: 'Something went wrong.',
+    selectCharacterLabel: 'Select Character',
+    helperText: 'Select a character to save this photo with',
+    defaultOption: 'Select a character',
+    alertSelectCharacter: 'Please select a character.',
+    saveSuccess: 'Image saved successfully!',
+    saveFail: 'Save failed: ',
+    saveError: 'An error occurred while saving.',
   },
 };
 

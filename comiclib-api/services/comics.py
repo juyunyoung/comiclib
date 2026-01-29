@@ -178,3 +178,14 @@ def delete_photo_info_by_id(id):
         return jsonify(data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@comics_bp.route('/comics/photo-info', methods=['POST'])
+def add_photo_info():
+    try:
+        data = request.json
+        # Expected data: user_id, character_id, photo_data
+        result = comic_service.add_photo_info(data)
+        return jsonify(result), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+

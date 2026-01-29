@@ -33,6 +33,26 @@ const FourCutPage = () => {
     });
   };
 
+  /* State for character selection */
+  const [characters, setCharacters] = useState([]);
+  const [selectedCharacter, setSelectedCharacter] = useState('');
+
+  // Fetch characters on mount
+  React.useEffect(() => {
+    const fetchCharacters = async () => {
+      try {
+        const response = await fetch('/api/comics/user-characters?user_id=juyunyoung');
+        if (response.ok) {
+          const data = await response.json();
+          setCharacters(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch characters:", error);
+      }
+    };
+    fetchCharacters();
+  }, []);
+
   const handleGenerate = async () => {
     if (!myPhoto || !charPhoto) {
       alert(t('fourCutPage.alertBothPhotos'));
@@ -52,9 +72,7 @@ const FourCutPage = () => {
       formData.append('keyword2', keyword2 || '환하게 웃는');
 
       // Call the comiclib-api backend
-      // Using environment variable for API URL
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5500';
-      const response = await fetch(`${apiUrl}/api/makePhoto`, {
+      const response = await fetch('/api/makePhoto', {
         method: 'POST',
         body: formData,
       });
@@ -84,14 +102,39 @@ const FourCutPage = () => {
     }
   };
 
-  const handleSave = () => {
-    if (resultImage) {
-      const link = document.createElement('a');
-      link.href = resultImage;
-      link.download = 'fourcut-result.jpg';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+  const handleSave = async () => {
+    if (!resultImage) return;
+
+    if (!selectedCharacter) {
+      alert(t('fourCutPage.alertSelectCharacter'));
+      return;
+    }
+
+    // resultImage is "data:image/jpeg;base64,....."
+    const base64Data = resultImage.split(',')[1];
+
+    try {
+      const response = await fetch('/api/comics/photo-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: 'juyunyoung',
+          character_id: selectedCharacter,
+          photo_data: base64Data
+        }),
+      });
+
+      if (response.ok) {
+        alert(t('fourCutPage.saveSuccess'));
+      } else {
+        const errText = await response.text();
+        alert(`${t('fourCutPage.saveFail')}${errText}`);
+      }
+    } catch (error) {
+      console.error("Save Error:", error);
+      alert(t('fourCutPage.saveError'));
     }
   };
 
@@ -217,6 +260,28 @@ const FourCutPage = () => {
           value={keyword2}
           onChange={(e) => setKeyword2(e.target.value)}
         />
+      </Box>
+
+      {/* Character Selection */}
+      <Box sx={{ mb: 4 }}>
+        <TextField
+          select
+          label={t('fourCutPage.selectCharacterLabel')}
+          value={selectedCharacter}
+          onChange={(e) => setSelectedCharacter(e.target.value)}
+          fullWidth
+          SelectProps={{
+            native: true,
+          }}
+          helperText={t('fourCutPage.helperText')}
+        >
+          <option value="">{t('fourCutPage.defaultOption')}</option>
+          {characters.map((char) => (
+            <option key={char.charactor_id} value={char.charactor_id}>
+              {char.charactor_name} ({char.comics?.title || 'Unknown Comic'})
+            </option>
+          ))}
+        </TextField>
       </Box>
 
       <Button

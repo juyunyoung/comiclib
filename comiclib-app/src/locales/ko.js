@@ -97,6 +97,13 @@ const ko = {
     errorHeic: 'HEIC 파일 처리에 실패했습니다. 다른 형식을 시도해주세요.',
     errorImageFormat: '이미지 파일(JPG, PNG 등)만 업로드해주세요.',
     generateError: '오류가 발생했습니다.',
+    selectCharacterLabel: '캐릭터 선택',
+    helperText: '저장할 캐릭터를 선택해주세요',
+    defaultOption: '캐릭터를 선택하세요',
+    alertSelectCharacter: '캐릭터를 선택해주세요.',
+    saveSuccess: '이미지가 성공적으로 저장되었습니다!',
+    saveFail: '저장 실패: ',
+    saveError: '저장 중 오류가 발생했습니다.',
   },
 };
 

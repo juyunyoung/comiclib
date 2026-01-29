@@ -26,11 +26,11 @@ class ComicService:
     def add_comic_character(self, character_data: dict):
         """
         Add a new comic character.
-        Table: comic_charactor
+        Table: comic_character
         Columns: usesr_id, comics_id, photo_id, note, charactor_name
         """
         print(character_data)   
-        response = self.supabase.table("comic_charactor").insert(character_data).execute()
+        response = self.supabase.table("comic_character").insert(character_data).execute()
         print(response.data)
         return response.data
 
@@ -46,17 +46,17 @@ class ComicService:
 
     def delete_comic_character(self, character_id: int):
         """Delete a comic character by ID."""
-        response = self.supabase.table("comic_charactor").delete().eq("id", character_id).execute()
+        response = self.supabase.table("comic_character").delete().eq("id", character_id).execute()
         return response.data
 
     def get_character_by_id(self, character_id: int):
         """Fetch a single character by ID."""
-        response = self.supabase.table("comic_charactor").select("*").eq("id", character_id).single().execute()
+        response = self.supabase.table("comic_character").select("*").eq("id", character_id).single().execute()
         return response.data
 
     def update_comic_character(self, character_id: int, updates: dict):
         """Update a comic character by ID."""
-        response = self.supabase.table("comic_charactor").update(updates).eq("id", character_id).execute()
+        response = self.supabase.table("comic_character").update(updates).eq("id", character_id).execute()
         return response.data
 
     def get_characters_info(self, user_id: str, comics_id: int = None):
@@ -66,7 +66,7 @@ class ComicService:
         Since foreign key relationship might be missing, we do a manual join.
         """
         # 1. Fetch characters for the user
-        query = self.supabase.table("comic_charactor").select("*").eq("user_id", user_id).order("affinity", desc=True)
+        query = self.supabase.table("comic_character").select("*").eq("user_id", user_id).order("affinity", desc=True)
         
         if comics_id:
             query = query.eq("comics_id", comics_id)
@@ -110,17 +110,17 @@ class ComicService:
         Fetch data for news list where user_id matches and news_list is 'Y'.
         Equivalent to SQL:
         select b.title, b.rating, a.charactor_name 
-        from comic_charactor a, comics b
+        from comic_character a, comics b
         where a.user_id = b.user_id
         and a.comics_id = b.id
         and a.user_id = :user_id
         and a.news_list = 'Y'
         """
         # Using Supabase embedding (joins)
-        # We select from comic_charactor (a) and join comics (b)
+        # We select from comic_character (a) and join comics (b)
         # 'comics!inner' forces an inner join (like a.comics_id = b.id)
-        # Filters are applied on comic_charactor
-        response = self.supabase.table("comic_charactor")\
+        # Filters are applied on comic_character
+        response = self.supabase.table("comic_character")\
             .select("charactor_name, comics!inner(title)")\
             .eq("user_id", user_id)\
             .eq("news_list", "Y")\
@@ -137,3 +137,13 @@ class ComicService:
         """Delete photo_info by id (character id)."""
         response = self.supabase.table("photo_info").delete().eq("id", id).execute()
         return response.data
+
+    def add_photo_info(self, photo_data: dict):
+        """
+        Add a new photo info.
+        Table: photo_info
+        Columns: user_id, character_id, photo_data (base64)
+        """
+        response = self.supabase.table("photo_info").insert(photo_data).execute()
+        return response.data
+
