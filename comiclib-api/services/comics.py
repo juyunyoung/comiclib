@@ -60,7 +60,7 @@ def add_comic():
 def add_comic_character():
     try:
         data = request.json
-        # Expect data matching the schema: usesr_id, comics_id, photo_id, note, charactor_name
+        # Expect data matching the schema: usesr_id, comics_id, photo_id, note, character_name
         result = comic_service.add_comic_character(data)
         return jsonify(result), 201
     except Exception as e:

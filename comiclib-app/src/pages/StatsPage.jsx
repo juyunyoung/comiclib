@@ -41,11 +41,11 @@ const StatsPage = () => {
 
       const formattedData = data.map((item, index) => ({
         id: `char-${index}`,
-        title: item.charactor_name,
+        title: item.character_name,
         // Use photo_url if available, else comic cover, else placeholder
         coverImage: item.photo_url || item.comics?.coverImage || 'https://via.placeholder.com/150?text=No+Image',
         comicId: item.comics?.id,
-        charId: item.charactor_id,
+        charId: item.character_id,
         affinity: item.affinity || 0,
         note: item.note
       }));

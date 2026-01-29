@@ -277,8 +277,8 @@ const FourCutPage = () => {
         >
           <option value="">{t('fourCutPage.defaultOption')}</option>
           {characters.map((char) => (
-            <option key={char.charactor_id} value={char.charactor_id}>
-              {char.charactor_name} ({char.comics?.title || 'Unknown Comic'})
+            <option key={char.character_id} value={char.character_id}>
+              {char.character_name} ({char.comics?.title || 'Unknown Comic'})
             </option>
           ))}
         </TextField>

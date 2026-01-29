@@ -27,7 +27,7 @@ class ComicService:
         """
         Add a new comic character.
         Table: comic_character
-        Columns: usesr_id, comics_id, photo_id, note, charactor_name
+        Columns: usesr_id, comics_id, photo_id, note, character_name
         """
         print(character_data)   
         response = self.supabase.table("comic_character").insert(character_data).execute()
@@ -98,7 +98,7 @@ class ComicService:
             # Construct the format expected by frontend (or flat, but frontend expects nested 'comics')
             char_data = {
                 **char,
-                "charactor_id": char.get('id'),
+                "character_id": char.get('id'),
                 "comics": comic_info if comic_info else {}
             }
             result.append(char_data)
@@ -109,7 +109,7 @@ class ComicService:
         """
         Fetch data for news list where user_id matches and news_list is 'Y'.
         Equivalent to SQL:
-        select b.title, b.rating, a.charactor_name 
+        select b.title, b.rating, a.character_name 
         from comic_character a, comics b
         where a.user_id = b.user_id
         and a.comics_id = b.id
@@ -121,7 +121,7 @@ class ComicService:
         # 'comics!inner' forces an inner join (like a.comics_id = b.id)
         # Filters are applied on comic_character
         response = self.supabase.table("comic_character")\
-            .select("charactor_name, comics!inner(title)")\
+            .select("character_name, comics!inner(title)")\
             .eq("user_id", user_id)\
             .eq("news_list", "Y")\
             .execute()

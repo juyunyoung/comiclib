@@ -39,7 +39,7 @@ const DetailPage = () => {
       setCharacter(data);
 
       // Initialize form
-      setName(data.charactor_name || '');
+      setName(data.character_name || '');
       setAffinity(data.affinity || 0);
       setNote(data.note || '');
       setPhotoUrl(data.photo_url || '');
@@ -71,7 +71,7 @@ const DetailPage = () => {
       }
 
       const updates = {
-        charactor_name: name,
+        character_name: name,
         affinity: affinity,
         note: note,
         photo_url: finalPhotoUrl,

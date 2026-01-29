@@ -251,7 +251,7 @@ def get_comprehensive_search_info(user_id, api_key):
     # format: "CharacterName (ComicTitle)"
     target_list = []
     for item in character_data:
-        char_name = item.get('charactor_name', 'Unknown')
+        char_name = item.get('character_name', 'Unknown')
         comic = item.get('comics', {})
         comic_title = comic.get('title', 'Unknown') if comic else 'Unknown'
         target_list.append(f"{char_name} (작품: {comic_title})")

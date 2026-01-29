@@ -84,7 +84,7 @@ const HomeDetail = () => {
         body: JSON.stringify({
           user_id: 'juyunyoung',
           comics_id: id,
-          charactor_name: name,
+          character_name: name,
           note: ''
         })
       });
@@ -212,9 +212,9 @@ const HomeDetail = () => {
                     width: 'fit-content',
                     gap: '8px'
                   }}>
-                    <strong>{char.charactor_name}</strong>
+                    <strong>{char.character_name}</strong>
                     <span
-                      onClick={(e) => handleDeleteCharacter(char.charactor_id, e)}
+                      onClick={(e) => handleDeleteCharacter(char.character_id, e)}
                       style={{
                         color: 'red',
                         fontWeight: 'bold',

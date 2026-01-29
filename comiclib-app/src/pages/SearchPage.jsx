@@ -174,7 +174,7 @@ const SearchPage = () => {
                 body: JSON.stringify({
                   user_id: 'juyunyoung',
                   comics_id: newComicId,
-                  charactor_name: charName,
+                  character_name: charName,
                   note: ''
                 })
               })
