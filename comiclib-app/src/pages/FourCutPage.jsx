@@ -44,6 +44,7 @@ const FourCutPage = () => {
         const response = await fetch('/api/comics/user-characters?user_id=juyunyoung');
         if (response.ok) {
           const data = await response.json();
+          console.log(data.length);
           setCharacters(data);
         }
       } catch (error) {
@@ -120,9 +121,10 @@ const FourCutPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: 'juyunyoung',
-          character_id: selectedCharacter,
-          photo_data: base64Data
+          id: selectedCharacter,
+          photo_base64: base64Data,
+          keyword1: keyword1,
+          keyword2: keyword2
         }),
       });
 

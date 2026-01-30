@@ -65,14 +65,16 @@ class ComicService:
         Optionally filter by comics_id.
         Since foreign key relationship might be missing, we do a manual join.
         """
+
+        
         # 1. Fetch characters for the user
         query = self.supabase.table("comic_character").select("*").eq("user_id", user_id).order("affinity", desc=True)
         
         if comics_id:
             query = query.eq("comics_id", comics_id)
-            
+        print(query)   
         chars_response = query.execute()
-        
+        print(chars_response.data)
         characters = chars_response.data
         if not characters:
             return []
@@ -125,12 +127,12 @@ class ComicService:
             .eq("user_id", user_id)\
             .eq("news_list", "Y")\
             .execute()
-            
+        print(response.data)   
         return response.data
 
     def get_photo_info_by_id(self, id: int):
         """Fetch photo_info by id (character id)."""
-        response = self.supabase.table("photo_info").select("*").eq("id", id).single().execute()
+        response = self.supabase.table("photo_info").select("*").eq("id", id).order("num").execute()
         return response.data
 
     def delete_photo_info_by_id(self, id: int):
@@ -142,8 +144,26 @@ class ComicService:
         """
         Add a new photo info.
         Table: photo_info
-        Columns: user_id, character_id, photo_data (base64)
+        Columns: id, num, photo_base64, keyword1, keyword2
         """
+        # Get the character ID from the input data
+        char_id = photo_data.get('id')
+        print(char_id)
+        # Query for the maximum num for this character ID
+        max_num_response = self.supabase.table("photo_info")\
+            .select("num")\
+            .eq("id", char_id)\
+            .order("num", desc=True)\
+            .limit(1)\
+            .execute()
+            
+        current_max_num = 0
+        if max_num_response.data:
+            current_max_num = max_num_response.data[0].get('num', 0)
+            
+        # Set the next num value
+        photo_data['num'] = current_max_num + 1
+        
         response = self.supabase.table("photo_info").insert(photo_data).execute()
         return response.data
 

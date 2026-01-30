@@ -63,6 +63,7 @@ const HomeDetail = () => {
   };
 
   const handleCharInputKeyDown = async (e) => {
+    if (e.nativeEvent.isComposing) return;
     if (e.key === 'Enter') {
       e.preventDefault();
       if (!newCharName.trim()) {

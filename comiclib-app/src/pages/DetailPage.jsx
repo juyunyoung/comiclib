@@ -14,6 +14,7 @@ const DetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [character, setCharacter] = useState(null);
+  const [photos, setPhotos] = useState([]);
 
   // Form State
   const [name, setName] = useState('');
@@ -26,8 +27,22 @@ const DetailPage = () => {
   useEffect(() => {
     if (id) {
       fetchCharacter();
+      fetchPhotos();
     }
   }, [id]);
+
+  const fetchPhotos = async () => {
+    try {
+      const response = await fetch(`/api/comics/photo-info/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+
+        setPhotos(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+    }
+  };
 
   const fetchCharacter = async () => {
     setLoading(true);
@@ -220,6 +235,54 @@ const DetailPage = () => {
 
         </Box>
       </Card>
+
+      {/* Styled Photos Grid */}
+      {photos.length > 0 && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+            {t('detailPage.characterPhotos') || 'Character Photos'}
+          </Typography>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 2,
+            width: '100%'
+          }}>
+            {photos.map((photo, index) => (
+              <Card key={photo.id || index} variant="outlined" sx={{
+                borderRadius: 2,
+                overflow: 'hidden',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'scale(1.02)'
+                }
+              }}>
+                <Box sx={{
+                  width: '100%',
+                  paddingTop: '100%', // 1:1 Aspect Ratio
+                  position: 'relative'
+                }}>
+                  <img
+                    src={photo.photo_base64.startsWith('data:') ? photo.photo_base64 : `data:image/jpeg;base64,${photo.photo_base64}`}
+                    alt={`Character Photo ${index + 1}`}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                </Box>
+                {/* Optional: Add delete button or info here */}
+              </Card>
+            ))}
+          </Box>
+        </Box>
+      )}
+
     </Box>
   );
 };
