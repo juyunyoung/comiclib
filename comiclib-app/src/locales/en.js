@@ -60,6 +60,8 @@ const en = {
     updateSuccess: 'Successfully updated!',
     updateFail: 'Update failed: ',
     newsList: 'News List',
+    deleteConfirm: 'Are you sure you want to delete this character?',
+    characterPhotos: 'Character Photos',
   },
   characterRanking: {
     title: 'Friend Ranking',

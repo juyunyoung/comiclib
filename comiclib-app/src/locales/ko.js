@@ -46,7 +46,7 @@ const ko = {
     review: '리뷰',
     backToList: '뒤로 가기',
     editCharacter: '친구 정보 수정',
-    uploadPhoto: '사진 수정',
+    uploadPhoto: '사진 업로드',
     saveChanges: '수정',
     affinity: '호감도',
     noCharacters: '등록된 친구가 없습니다.',
@@ -60,6 +60,8 @@ const ko = {
     updateSuccess: '성공적으로 수정되었습니다!',
     updateFail: '수정 실패: ',
     newsList: '뉴스 리스트',
+    deleteConfirm: '정말로 이 캐릭터를 삭제하시겠습니까?',
+    characterPhotos: '캐릭터 사진',
   },
   characterRanking: {
     title: '캐릭터 랭킹',

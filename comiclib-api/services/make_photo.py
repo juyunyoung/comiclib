@@ -27,6 +27,7 @@ def generate_merged_photo(path1, path2, keyword1, keyword2, api_key):
     prompt_part = types.Part.from_text(text=f"사진의 인물들을 추출하여 다음의 상황으로 합성해 주세요. 키워드 1: {keyword1}, 키워드 2: {keyword2}")
     print(f"Debug - Prompt: {prompt_part}")
     model_name = "gemini-3-pro-image-preview"
+    #model_name = "gemini-2.5-flash-image"
     
     # Configure Safety Settings
     safety_settings = [
@@ -70,8 +71,8 @@ def generate_merged_photo(path1, path2, keyword1, keyword2, api_key):
          image = response.generated_images[0]
          return base64.b64encode(image.image_bytes).decode('utf-8')
          
-    # Fallback: check parts if generated_images key isn't populated for this model
-    if response.candidates:
+    # Fallback: check parts
+    elif response.candidates:
         for candidate in response.candidates:
             if candidate.content and candidate.content.parts:
                 for part in candidate.content.parts:

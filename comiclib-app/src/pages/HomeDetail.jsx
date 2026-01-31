@@ -105,7 +105,7 @@ const HomeDetail = () => {
 
   const handleDeleteCharacter = async (charId, e) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this character?")) return;
+    if (!window.confirm(t('detailPage.deleteConfirm'))) return;
 
     try {
       console.log(charId);

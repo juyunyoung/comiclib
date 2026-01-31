@@ -264,7 +264,13 @@ const DetailPage = () => {
                   position: 'relative'
                 }}>
                   <img
-                    src={photo.photo_base64.startsWith('data:') ? photo.photo_base64 : `data:image/jpeg;base64,${photo.photo_base64}`}
+                    src={
+                      photo.photo_base64.startsWith('http')
+                        ? photo.photo_base64
+                        : (photo.photo_base64.startsWith('data:')
+                          ? photo.photo_base64
+                          : `data:image/jpeg;base64,${photo.photo_base64}`)
+                    }
                     alt={`Character Photo ${index + 1}`}
                     style={{
                       position: 'absolute',

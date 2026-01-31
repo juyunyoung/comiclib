@@ -111,8 +111,11 @@ const FourCutPage = () => {
       return;
     }
 
-    // resultImage is "data:image/jpeg;base64,....."
-    const base64Data = resultImage.split(',')[1];
+    // resultImage is either a URL "http..." or Data URI "data:image/..."
+    let photoData = resultImage;
+    if (resultImage.startsWith('data:')) {
+      photoData = resultImage.split(',')[1];
+    }
 
     try {
       const response = await fetch('/api/comics/photo-info', {
@@ -122,7 +125,7 @@ const FourCutPage = () => {
         },
         body: JSON.stringify({
           id: selectedCharacter,
-          photo_base64: base64Data,
+          photo_base64: photoData,
           keyword1: keyword1,
           keyword2: keyword2
         }),
@@ -274,6 +277,9 @@ const FourCutPage = () => {
           fullWidth
           SelectProps={{
             native: true,
+          }}
+          InputLabelProps={{
+            shrink: true,
           }}
           helperText={t('fourCutPage.helperText')}
         >

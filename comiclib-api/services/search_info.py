@@ -4,6 +4,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from datetime import datetime, timedelta
 
 search_info_bp = Blueprint('search_info', __name__)
 
@@ -20,7 +21,7 @@ def get_search_info(query, api_key):
     system_instruction = "당신은 만화책 전문가 AI 에이전트입니다. 사용자의 질문에 대해 Google 검색을 사용하여 정확하고 풍부한 정보를 찾아 답변해주세요. 특히 만화 관련 리뷰나 영상(YouTube)이 있다면 해당 정보도 함께 찾아서 소개해 주세요. 답변은 한국어로 친절하게 작성해주세요."
 
     response = client.models.generate_content(
-        model='gemini-2.0-flash-exp',
+        model='gemini-2.0-flash',
         contents=query,
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -95,7 +96,7 @@ def get_game_search_info(query, api_key):
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             contents=query,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -189,7 +190,7 @@ def get_character_info(query, api_key):
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             contents=f"'{query}'에 등장하는 주요 캐릭터들을 찾아주세요.",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -260,8 +261,13 @@ def get_comprehensive_search_info(user_id, api_key):
     print(f"Targeting characters: {targets_str}")
 
     client = genai.Client(api_key=api_key)
+    #오늘 날짜 +2달
+    today = datetime.now()
+    two_months_before = today - timedelta(days=60)
+    
 
-    system_instruction = """
+    print(two_months_before)
+    system_instruction = f"""
     당신은 서브컬처(게임, 만화, 애니메이션) 정보 수집 전문 AI 에이전트입니다.
     사용자가 요청한 대상 캐릭터 위주의  최신 소식과 정보를 Google 검색을 통해 수집하여 카테고리별로 정리해주세요.
     나무위키 싸이트는 제외해주세요
@@ -277,21 +283,21 @@ def get_comprehensive_search_info(user_id, api_key):
     7. 만화책 출판일 (Release Date)
     
     각 정보는 제목, 링크(URL), 내용 요약, 날짜(확인 가능한 경우)를 포함해야 합니다.
-    최신 정보를 우선적으로 찾아주세요. 2개월 지난 내용은 제외해 주세요
+    최신 정보를 우선적으로 찾아주세요. {two_months_before} 이후의 정보만 찾아주세요
     검색 결과는 반드시 한국어로 작성해주세요.
     
     응답은 반드시 다음 JSON 형식을 따라주세요. 코드 블록 없이 JSON만 반환하세요.
-    {
+    {{
         "items": [
-            {
+            {{
                 
                 "title": "제목",
                 "link": "URL",
                 "content": "내용 요약",
                 "date": "2024-01-01 등의 날짜 또는 '2024년 1월' 등, 없으면 빈문자열"
-            }
+            }}
         ]
-    }
+    }}
     """
 
     import json
@@ -299,7 +305,7 @@ def get_comprehensive_search_info(user_id, api_key):
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash-exp',
+            model='gemini-2.0-flash',
             contents=f"다음 캐릭터들과 작품에 대한 최신 소식(홈페이지, 이벤트, 콜라보, 굿즈, 출판 등)을 모두 찾아주세요: {targets_str}",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,

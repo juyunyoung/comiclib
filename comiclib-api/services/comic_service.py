@@ -1,4 +1,8 @@
 from utils.db import get_supabase
+from google.cloud import storage
+import base64
+from datetime import timedelta
+import datetime
 
 class ComicService:
     def __init__(self):
@@ -133,7 +137,43 @@ class ComicService:
     def get_photo_info_by_id(self, id: int):
         """Fetch photo_info by id (character id)."""
         response = self.supabase.table("photo_info").select("*").eq("id", id).order("num").execute()
-        return response.data
+        photos = response.data
+        
+        # Generate Signed URLs for GCS paths
+        client = storage.Client()
+        bucket = client.bucket("2dfriend_photo")
+        
+        for photo in photos:
+            photo_val = photo.get('photo_base64', '')
+            blob_path = None
+            
+            # Case 1: Stored as relative path (New way)
+            if photo_val and photo_val.startswith('AI_photo/'):
+                blob_path = photo_val
+            
+            # Case 2: Stored as full public URL (Old way, but now private)
+            elif photo_val and photo_val.startswith('https://storage.googleapis.com/2dfriend_photo/'):
+                # Extract path after bucket name
+                blob_path = photo_val.replace('https://storage.googleapis.com/2dfriend_photo/', '')
+
+            if blob_path:
+                try:
+                    blob = bucket.blob(blob_path)
+                    # Generate signed URL valid for 1 hour
+                    signed_url = blob.generate_signed_url(
+                        version="v4",
+                        expiration=datetime.timedelta(hours=1),
+                        method="GET"
+                    )
+                    photo['photo_base64'] = signed_url
+                except Exception as e:
+                    print(f"Error generating signed URL for {photo_val}: {e}")
+                    if "private key" in str(e):
+                        print("HINT: Signed URLs require a Service Account Key (JSON). 'gcloud auth login' credentials do not have a private key.")
+                    # Keep original value if generation fails
+                    pass
+        
+        return photos
 
     def delete_photo_info_by_id(self, id: int):
         """Delete photo_info by id (character id)."""
@@ -164,6 +204,38 @@ class ComicService:
         # Set the next num value
         photo_data['num'] = current_max_num + 1
         
+        # Upload to GCS
+        try:
+            # Decode base64
+            image_data = base64.b64decode(photo_data.get('photo_base64'))
+            
+            # Determine the blob name
+            blob_name = f"AI_photo/character_{char_id}_{photo_data['num']}.jpg"
+            
+            # GCS Upload
+            # Note: This requires GOOGLE_APPLICATION_CREDENTIALS to be set or 'gcloud auth application-default login'
+            client = storage.Client()
+            bucket = client.bucket("2dfriend_photo")
+            blob = bucket.blob(blob_name)
+            
+            # Upload from string (bytes)
+            blob.upload_from_string(image_data, content_type='image/jpeg')
+            
+            # Store the BLOB NAME (Path) instead of public URL
+            # The frontend will receive a Signed URL via get_photo_info_by_id
+            print(f"Uploaded to GCS Path: {blob_name}")
+            
+             # Update photo_data to store PATH
+            photo_data['photo_base64'] = blob_name
+            
+        except Exception as e:
+            print(f"GCS Upload Failed: {e}")
+            if "invalid_grant" in str(e):
+                print("HINT: Run 'gcloud auth application-default login' or set GOOGLE_APPLICATION_CREDENTIALS")
+            # Proceeding might fail if photo_base64 is still binary and schema expects text (URL/Path).
+            # But if validation fails, it fails.
+        print("photo_data['photo_base64']"+photo_data['photo_base64'])
+
         response = self.supabase.table("photo_info").insert(photo_data).execute()
         return response.data
 
