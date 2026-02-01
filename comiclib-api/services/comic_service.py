@@ -137,8 +137,9 @@ class ComicService:
     def get_photo_info_by_id(self, id: int):
         """Fetch photo_info by id (character id)."""
         response = self.supabase.table("photo_info").select("*").eq("id", id).order("num").execute()
+        print("get_photo_info_by_id response ",response.data)      
         photos = response.data
-        
+        print("photo_base64: ", photos[0]['photo_base64'])      
         # Generate Signed URLs for GCS paths
         client = storage.Client()
         bucket = client.bucket("2dfriend_photo")
@@ -146,7 +147,7 @@ class ComicService:
         for photo in photos:
             photo_val = photo.get('photo_base64', '')
             blob_path = None
-            
+            print("Case 1 photo_base64: ", photo['photo_base64'])      
             # Case 1: Stored as relative path (New way)
             if photo_val and photo_val.startswith('AI_photo/'):
                 blob_path = photo_val
