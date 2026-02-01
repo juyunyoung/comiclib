@@ -250,6 +250,7 @@ const DetailPage = () => {
             width: '100%'
           }}>
             {photos.map((photo, index) => {
+              console.log(photo)
               const imageSrc = photo.photo_base64.startsWith('http')
                 ? photo.photo_base64
                 : (photo.photo_base64.startsWith('data:')
