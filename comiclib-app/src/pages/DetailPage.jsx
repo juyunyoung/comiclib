@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from '../context/LanguageContext';
-import { Button, Box, Typography, Card, CardContent, Alert, CircularProgress, Rating, TextField, Avatar } from '@mui/material';
+import { Button, Box, Typography, Card, CardContent, Alert, CircularProgress, Rating, TextField, Avatar, Modal } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 
@@ -15,6 +15,7 @@ const DetailPage = () => {
   const [error, setError] = useState(null);
   const [character, setCharacter] = useState(null);
   const [photos, setPhotos] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null); // Modal State
 
   // Form State
   const [name, setName] = useState('');
@@ -248,46 +249,95 @@ const DetailPage = () => {
             gap: 2,
             width: '100%'
           }}>
-            {photos.map((photo, index) => (
-              <Card key={photo.id || index} variant="outlined" sx={{
-                borderRadius: 2,
-                overflow: 'hidden',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'scale(1.02)'
-                }
-              }}>
-                <Box sx={{
-                  width: '100%',
-                  paddingTop: '100%', // 1:1 Aspect Ratio
-                  position: 'relative'
-                }}>
-                  <img
-                    src={
-                      photo.photo_base64.startsWith('http')
-                        ? photo.photo_base64
-                        : (photo.photo_base64.startsWith('data:')
-                          ? photo.photo_base64
-                          : `data:image/jpeg;base64,${photo.photo_base64}`)
+            {photos.map((photo, index) => {
+              const imageSrc = photo.photo_base64.startsWith('http')
+                ? photo.photo_base64
+                : (photo.photo_base64.startsWith('data:')
+                  ? photo.photo_base64
+                  : `data:image/jpeg;base64,${photo.photo_base64}`);
+
+              return (
+                <Card
+                  key={photo.id || index}
+                  variant="outlined"
+                  onClick={() => setSelectedImage(imageSrc)}
+                  sx={{
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.2s',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'scale(1.02)'
                     }
-                    alt={`Character Photo ${index + 1}`}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                </Box>
-                {/* Optional: Add delete button or info here */}
-              </Card>
-            ))}
+                  }}>
+                  <Box sx={{
+                    width: '100%',
+                    paddingTop: '100%', // 1:1 Aspect Ratio
+                    position: 'relative'
+                  }}>
+                    <img
+                      src={imageSrc}
+                      alt={`Character Photo ${index + 1}`}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  </Box>
+                </Card>
+              )
+            })}
           </Box>
         </Box>
       )}
+
+      {/* Image Modal */}
+      <Modal
+        open={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Box
+          sx={{
+            width: '60%',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 1,
+            borderRadius: 2,
+            outline: 'none',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+          }}
+          onClick={() => setSelectedImage(null)}
+        >
+          {selectedImage && (
+            <img
+              src={selectedImage}
+              alt="Enlarged Character"
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: '85vh',
+                objectFit: 'contain',
+                borderRadius: '4px',
+              }}
+            />
+          )}
+        </Box>
+      </Modal>
 
     </Box>
   );
