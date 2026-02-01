@@ -33,9 +33,9 @@ class ComicService:
         Table: comic_character
         Columns: usesr_id, comics_id, photo_id, note, character_name
         """
-        print(character_data)   
+
         response = self.supabase.table("comic_character").insert(character_data).execute()
-        print(response.data)
+
         return response.data
 
     def update_comic(self, comic_id: int, updates: dict):
@@ -76,9 +76,9 @@ class ComicService:
         
         if comics_id:
             query = query.eq("comics_id", comics_id)
-        print(query)   
+
         chars_response = query.execute()
-        print(chars_response.data)
+
         characters = chars_response.data
         if not characters:
             return []
@@ -131,15 +131,15 @@ class ComicService:
             .eq("user_id", user_id)\
             .eq("news_list", "Y")\
             .execute()
-        print(response.data)   
+
         return response.data
 
     def get_photo_info_by_id(self, id: int):
         """Fetch photo_info by id (character id)."""
         response = self.supabase.table("photo_info").select("*").eq("id", id).order("num").execute()
-        print("get_photo_info_by_id response ",response.data)      
+
         photos = response.data
-        print("photo_base64: ", photos[0]['photo_base64'])      
+
         # Generate Signed URLs for GCS paths
         key_path = "hackton-team-pro-68bac217be8c.json"
         
@@ -177,7 +177,7 @@ class ComicService:
         for photo in photos:
             photo_val = photo.get('photo_base64', '')
             blob_path = None
-            print("Case 1 photo_base64: ", photo['photo_base64'])      
+
             # Case 1: Stored as relative path (New way)
             if photo_val and photo_val.startswith('AI_photo/'):
                 blob_path = photo_val
@@ -218,7 +218,7 @@ class ComicService:
                     if "private key" in str(e):
                          print("HINT: On Cloud Run, ensure Service Account has 'Service Account Token Creator' role.")
                     pass
-            print("photo_base64: ", photo['photo_base64'])        
+
         return photos
 
     def delete_photo_info_by_id(self, id: int):
@@ -234,7 +234,7 @@ class ComicService:
         """
         # Get the character ID from the input data
         char_id = photo_data.get('id')
-        print(char_id)
+
         # Query for the maximum num for this character ID
         max_num_response = self.supabase.table("photo_info")\
             .select("num")\
@@ -269,7 +269,7 @@ class ComicService:
             
             # Store the BLOB NAME (Path) instead of public URL
             # The frontend will receive a Signed URL via get_photo_info_by_id
-            print(f"Uploaded to GCS Path: {blob_name}")
+
             
              # Update photo_data to store PATH
             photo_data['photo_base64'] = blob_name
@@ -280,7 +280,7 @@ class ComicService:
                 print("HINT: Run 'gcloud auth application-default login' or set GOOGLE_APPLICATION_CREDENTIALS")
             # Proceeding might fail if photo_base64 is still binary and schema expects text (URL/Path).
             # But if validation fails, it fails.
-        print("photo_data['photo_base64']"+photo_data['photo_base64'])
+
 
         response = self.supabase.table("photo_info").insert(photo_data).execute()
         return response.data

@@ -7,3 +7,5 @@ pydantic<2.12
 tenacity<9
 supabase
 google-cloud-storage
+google-auth
+
