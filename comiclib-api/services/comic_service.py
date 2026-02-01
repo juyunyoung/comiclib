@@ -166,14 +166,14 @@ class ComicService:
                         method="GET"
                     )
                     photo['photo_base64'] = signed_url
-                    print(photo['photo_base64'])
+                    
                 except Exception as e:
                     print(f"Error generating signed URL for {photo_val}: {e}")
                     if "private key" in str(e):
                         print("HINT: Signed URLs require a Service Account Key (JSON). 'gcloud auth login' credentials do not have a private key.")
                     # Keep original value if generation fails
                     pass
-        
+            print("photo_base64: ", photo['photo_base64'])        
         return photos
 
     def delete_photo_info_by_id(self, id: int):
