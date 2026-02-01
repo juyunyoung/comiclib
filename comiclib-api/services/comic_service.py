@@ -141,7 +141,37 @@ class ComicService:
         photos = response.data
         print("photo_base64: ", photos[0]['photo_base64'])      
         # Generate Signed URLs for GCS paths
-        client = storage.Client()
+        key_path = "hackton-team-pro-68bac217be8c.json"
+        
+        credentials = None
+        import os
+        from google.oauth2 import service_account
+        import google.auth
+        import google.auth.transport.requests
+
+        if os.path.exists(key_path):
+             # Local Dev with Key File
+             try:
+                 credentials = service_account.Credentials.from_service_account_file(key_path)
+                 client = storage.Client(credentials=credentials)
+             except Exception as e:
+                 print(f"Failed to load key file: {e}")
+                 client = storage.Client()
+        else:
+             # Cloud Run / Prod (No Key File) -> Use IAM Signing
+             try:
+                credentials, project_id = google.auth.default()
+                
+                # Refresh credentials to ensure we have a token and email
+                if not credentials.valid:
+                    request = google.auth.transport.requests.Request()
+                    credentials.refresh(request)
+                
+                client = storage.Client(credentials=credentials)
+             except Exception as e:
+                 print(f"Auth default failed: {e}")
+                 client = storage.Client()
+
         bucket = client.bucket("2dfriend_photo")
         
         for photo in photos:
@@ -152,27 +182,41 @@ class ComicService:
             if photo_val and photo_val.startswith('AI_photo/'):
                 blob_path = photo_val
             
-            # Case 2: Stored as full public URL (Old way, but now private)
+            # Case 2: Stored as full public URL
             elif photo_val and photo_val.startswith('https://storage.googleapis.com/2dfriend_photo/'):
-                # Extract path after bucket name
                 blob_path = photo_val.replace('https://storage.googleapis.com/2dfriend_photo/', '')
 
             if blob_path:
                 try:
                     blob = bucket.blob(blob_path)
-                    # Generate signed URL valid for 1 hour
-                    signed_url = blob.generate_signed_url(
-                        version="v4",
-                        expiration=datetime.timedelta(hours=1),
-                        method="GET"
-                    )
+                    
+                    kwargs = {
+                        "version": "v4",
+                        "expiration": datetime.timedelta(hours=1),
+                        "method": "GET"
+                    }
+
+                    # Determine if we need to pass IAM credentials explicitly
+                    # (Standard Compute Engine creds don't sign locally)
+                    service_account_email = None
+                    if credentials:
+                        if hasattr(credentials, 'service_account_email'):
+                            service_account_email = credentials.service_account_email
+                        elif hasattr(credentials, 'signer_email'):
+                            service_account_email = credentials.signer_email
+
+                        # If using IAM (not a local Service Account Key), pass email and token
+                        if service_account_email and not isinstance(credentials, service_account.Credentials):
+                             kwargs["service_account_email"] = service_account_email
+                             kwargs["access_token"] = credentials.token
+                    
+                    signed_url = blob.generate_signed_url(**kwargs)
                     photo['photo_base64'] = signed_url
                     
                 except Exception as e:
                     print(f"Error generating signed URL for {photo_val}: {e}")
                     if "private key" in str(e):
-                        print("HINT: Signed URLs require a Service Account Key (JSON). 'gcloud auth login' credentials do not have a private key.")
-                    # Keep original value if generation fails
+                         print("HINT: On Cloud Run, ensure Service Account has 'Service Account Token Creator' role.")
                     pass
             print("photo_base64: ", photo['photo_base64'])        
         return photos
