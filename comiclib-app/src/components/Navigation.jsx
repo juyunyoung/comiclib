@@ -10,16 +10,17 @@ const Navigation = () => {
     <AppBar position="fixed" sx={{ top: 'auto', bottom: 0 }}>
       <Toolbar>
         <Box sx={{ display: 'flex', flex: 1 }}>
-          <Tooltip title={t('nevigation.home')}>
-            <Button color="inherit" component={Link} to="/" sx={{ flex: 1, p: 1 }}>
-              <img src="/icons/home.png" alt="Home" style={{ height: '40px', width: 'auto' }} />
-            </Button>
-          </Tooltip>
           <Tooltip title={t('nevigation.register')}>
             <Button color="inherit" component={Link} to="/register" sx={{ flex: 1, p: 1 }}>
               <img src="/icons/add.png" alt="Add" style={{ height: '40px', width: 'auto' }} />
             </Button>
           </Tooltip>
+          <Tooltip title={t('nevigation.home')}>
+            <Button color="inherit" component={Link} to="/" sx={{ flex: 1, p: 1 }}>
+              <img src="/icons/home.png" alt="Home" style={{ height: '40px', width: 'auto' }} />
+            </Button>
+          </Tooltip>
+
           <Tooltip title={t('nevigation.stats')}>
             <Button color="inherit" component={Link} to="/stats" sx={{ flex: 1, p: 1 }}>
               <img src="/icons/stats.png" alt="Stats" style={{ height: '40px', width: 'auto' }} />
