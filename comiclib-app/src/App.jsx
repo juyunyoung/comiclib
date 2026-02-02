@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Container, CircularProgress, Box } from '@mui/material';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -27,8 +27,9 @@ function AppContent() {
             </Box>
           }>
             <Routes>
-              <Route path="/" element={<HomePage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/" element={<Navigate to="/register" replace />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/detail/:id" element={<DetailPage />} />
               <Route path="/home-detail/:id" element={<HomeDetail />} />
               <Route path="/stats" element={<CharacterInfo />} />
