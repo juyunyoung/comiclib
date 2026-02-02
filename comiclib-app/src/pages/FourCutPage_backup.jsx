@@ -1,115 +1,162 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Button, Paper, CircularProgress, TextField } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
-import { useUser } from '../context/UserContext';
-import { useAlert } from '../context/AlertContext';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import heic2any from 'heic2any';
-import api from '../utils/api';
 
 const FourCutPage = () => {
   const { t } = useTranslation();
-  const { userId } = useUser();
-  const { showAlert } = useAlert();
-
-  // State
-  const [characters, setCharacters] = useState([]);
-  const [selectedCharId, setSelectedCharId] = useState('');
-  const [userImage, setUserImage] = useState(null);
+  const [myPhoto, setMyPhoto] = useState(null);
   const [charPhoto, setCharPhoto] = useState(null);
-  const [generatedImage, setGeneratedImage] = useState(null);
+  const [resultImage, setResultImage] = useState(null);
+  const [resultText, setResultText] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [keyword1, setKeyword1] = useState('');
   const [keyword2, setKeyword2] = useState('');
 
+  // Helper to convert file to base64
+  const fileToGenerativePart = async (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Data = reader.result.split(',')[1];
+        resolve({
+          inlineData: {
+            data: base64Data,
+            mimeType: file.type,
+          },
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  /* State for character selection */
+  const [characters, setCharacters] = useState([]);
+  const [selectedCharacter, setSelectedCharacter] = useState('');
+
   // Fetch characters on mount
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        const data = await api.get(`/api/comics/user-characters?user_id=${userId}`);
-
-        // Filter unique characters by name
-        const uniqueChars = [];
-        const seen = new Set();
-        data.forEach(char => {
-          if (!seen.has(char.character_name)) {
-            seen.add(char.character_name);
-            uniqueChars.push(char);
-          }
-        });
-        setCharacters(uniqueChars);
+        const response = await fetch('/api/comics/user-characters?user_id=juyunyoung');
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data.length);
+          setCharacters(data);
+        }
       } catch (error) {
         console.error("Failed to fetch characters:", error);
       }
     };
     fetchCharacters();
-  }, [userId]);
+  }, []);
 
   const handleGenerate = async () => {
-    if (!userImage || !charPhoto) {
-      showAlert(t('fourCutPage.alertBothPhotos'), t('common.info'), 'info');
+    if (!myPhoto || !charPhoto) {
+      alert(t('fourCutPage.alertBothPhotos'));
       return;
     }
 
-    // We don't strictly require selecting a character for generation based on backup, 
-    // but the backup logic actually passed `character_name` if available?
-    // Backup: `formData.append('image1', myPhoto); formData.append('image2', charPhoto);`
-    // It did NOT appear to send character name to `makePhoto`.
-    // The current `FourCutPage` sends `character_name`.
-    // I will stick to the backup logic for generation inputs (2 images) 
-    // but maybe keep character name if the user wants to use a registered character's name as context?
-    // However, the prompt says "Synthesis of user's uploaded photo and a character photo".
-    // So the API likely expects 2 images.
-
     setLoading(true);
-    setGeneratedImage(null);
     setError(null);
-
-    const formData = new FormData();
-    formData.append('image1', userImage);
-    formData.append('image2', charPhoto);
-    if (keyword1) formData.append('keyword1', keyword1);
-    else formData.append('keyword1', '어깨동무'); // Default from backup
-
-    if (keyword2) formData.append('keyword2', keyword2);
-    else formData.append('keyword2', '환하게 웃는'); // Default from backup
+    setResultImage(null);
+    setResultText(null);
 
     try {
-      // Use api.upload for FormData
-      // The backup used fetch('/api/makePhoto', ...) which returns { image: base64 }
-      // api.upload returns response.json().
-      const result = await api.upload('/api/makePhoto', formData);
-      setGeneratedImage(`data:image/jpeg;base64,${result.image}`);
-    } catch (error) {
-      console.error("Generation failed:", error);
-      setError(error.message || t('fourCutPage.generateFail'));
-      showAlert(`${t('fourCutPage.generateFail')}: ${error.message}`, t('common.error'), 'error');
+      const formData = new FormData();
+      formData.append('image1', myPhoto);
+      formData.append('image2', charPhoto);
+      formData.append('keyword1', keyword1 || '어깨동무');
+      formData.append('keyword2', keyword2 || '환하게 웃는');
+
+      // Call the comiclib-api backend
+      const response = await fetch('/api/makePhoto', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.image) {
+        // The backend returns a base64 string in 'image' field
+        setResultImage(`data:image/jpeg;base64,${result.image}`);
+      } else if (result.error) {
+        throw new Error(result.error);
+      } else {
+        throw new Error("Unknown response format from server");
+      }
+
+    } catch (err) {
+      console.error("AI Generation Error:", err);
+      setError(err.message || t('fourCutPage.generateError'));
+      alert(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSave = async () => {
-    if (!generatedImage || !selectedCharId) return;
+    if (!resultImage) return;
+
+    if (!selectedCharacter) {
+      alert(t('fourCutPage.alertSelectCharacter'));
+      return;
+    }
+
+    // resultImage is either a URL "http..." or Data URI "data:image/..."
+    let photoData = resultImage;
+    if (resultImage.startsWith('data:')) {
+      photoData = resultImage.split(',')[1];
+    }
 
     try {
-      // Extract base64 part
-      const photoData = generatedImage.startsWith('data:')
-        ? generatedImage.split(',')[1]
-        : generatedImage;
-
-      await api.post('/api/comics/photo-info', {
-        id: selectedCharId,
-        photo_base64: photoData,
-        keyword1,
-        keyword2
+      const response = await fetch('/api/comics/photo-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: selectedCharacter,
+          photo_base64: photoData,
+          keyword1: keyword1,
+          keyword2: keyword2
+        }),
       });
-      showAlert(t('fourCutPage.saveSuccess'), t('common.success'), 'success');
+
+      if (response.ok) {
+        alert(t('fourCutPage.saveSuccess'));
+      } else {
+        const errText = await response.text();
+        alert(`${t('fourCutPage.saveFail')}${errText}`);
+      }
     } catch (error) {
-      console.error("Save failed:", error);
-      showAlert(t('fourCutPage.saveFail'), t('common.error'), 'error');
+      console.error("Save Error:", error);
+      alert(t('fourCutPage.saveError'));
     }
   };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Keep the old helper for compatibility if needed or remove it.
+  // The SDK used `fileToGenerativePart` which did something similar.
+  /* 
+  const fileToGenerativePart = async (file) => { ... } 
+  */
 
   const PhotoUpload = ({ label, file, setFile }) => (
     <Box sx={{ mb: 3, textAlign: 'center' }}>
@@ -149,7 +196,6 @@ const FourCutPage = () => {
           onChange={async (e) => {
             const selectedFile = e.target.files[0];
             if (selectedFile) {
-              // Simple HEIC check if needed, otherwise just set file
               if (selectedFile.type === 'image/heic' || selectedFile.name.toLowerCase().endsWith('.heic')) {
                 try {
                   const result = await heic2any({ blob: selectedFile, toType: 'image/jpeg' });
@@ -160,12 +206,19 @@ const FourCutPage = () => {
                     { type: 'image/jpeg' }
                   );
                   setFile(convertedFile);
-                } catch (err) {
-                  showAlert(t('fourCutPage.errorHeic'), t('common.error'), 'error');
+                  return;
+                } catch (error) {
+                  console.error('HEIC conversion failed:', error);
+                  alert(t('fourCutPage.errorHeic'));
+                  return;
                 }
-              } else {
-                setFile(selectedFile);
               }
+
+              if (!selectedFile.type.startsWith('image/')) {
+                alert(t('fourCutPage.errorImageFormat'));
+                return;
+              }
+              setFile(selectedFile);
             }
           }}
         />
@@ -183,8 +236,8 @@ const FourCutPage = () => {
         <Box sx={{ flex: 1 }}>
           <PhotoUpload
             label={t('fourCutPage.myPhoto')}
-            file={userImage}
-            setFile={setUserImage}
+            file={myPhoto}
+            setFile={setMyPhoto}
           />
         </Box>
         <Box sx={{ flex: 1 }}>
@@ -219,8 +272,8 @@ const FourCutPage = () => {
         <TextField
           select
           label={t('fourCutPage.selectCharacterLabel')}
-          value={selectedCharId}
-          onChange={(e) => setSelectedCharId(e.target.value)}
+          value={selectedCharacter}
+          onChange={(e) => setSelectedCharacter(e.target.value)}
           fullWidth
           SelectProps={{
             native: true,
@@ -257,13 +310,13 @@ const FourCutPage = () => {
         </Typography>
       )}
 
-      {generatedImage && (
+      {resultImage && (
         <Box sx={{ mt: 4, textAlign: 'center' }}>
           <Typography variant="h5" gutterBottom>
             {t('fourCutPage.result')}
           </Typography>
           <Paper elevation={3} sx={{ p: 2, display: 'inline-block' }}>
-            <img src={generatedImage} alt="Result" style={{ maxWidth: '100%', maxHeight: 400 }} />
+            <img src={resultImage} alt="Result" style={{ maxWidth: '100%', maxHeight: 400 }} />
           </Paper>
           <Box sx={{ mt: 2 }}>
             <Button
@@ -274,6 +327,19 @@ const FourCutPage = () => {
               {t('fourCutPage.saveImage')}
             </Button>
           </Box>
+        </Box>
+      )}
+
+      {resultText && !resultImage && (
+        <Box sx={{ mt: 4, textAlign: 'center', px: 2 }}>
+          <Typography variant="h5" gutterBottom>
+            {t('fourCutPage.result')}
+          </Typography>
+          <Paper elevation={3} sx={{ p: 3, bgcolor: '#f5f5f5', minHeight: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+              {resultText}
+            </Typography>
+          </Paper>
         </Box>
       )}
     </Box>

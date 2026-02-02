@@ -174,7 +174,8 @@ def get_photo_info_by_id(id):
 @comics_bp.route('/comics/photo-info/<int:id>', methods=['DELETE'])
 def delete_photo_info_by_id(id):
     try:
-        data = comic_service.delete_photo_info_by_id(id)
+        num = request.args.get('num')
+        data = comic_service.delete_photo_info_by_id(id, num)
         return jsonify(data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

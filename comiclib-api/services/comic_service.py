@@ -221,9 +221,79 @@ class ComicService:
 
         return photos
 
-    def delete_photo_info_by_id(self, id: int):
-        """Delete photo_info by id (character id)."""
-        response = self.supabase.table("photo_info").delete().eq("id", id).execute()
+    def delete_photo_info_by_id(self, id: int, num: int = None):
+        """
+        Delete photo_info and associated GCS files by id.
+        If num is provided, delete only that specific photo.
+        """
+        
+        # 1. Fetch records to get file paths
+        query = self.supabase.table("photo_info").select("*").eq("id", id)
+        if num is not None:
+             query = query.eq("num", num)
+        
+        target_photos = query.execute().data
+        
+        if target_photos:
+            try:
+                # 2. Setup GCS Client (Reusing auth logic)
+                key_path = "hackton-team-pro-68bac217be8c.json"
+                credentials = None
+                import os
+                from google.oauth2 import service_account
+                import google.auth
+                import google.auth.transport.requests
+
+                if os.path.exists(key_path):
+                     try:
+                         credentials = service_account.Credentials.from_service_account_file(key_path)
+                         client = storage.Client(credentials=credentials)
+                     except Exception as e:
+                         print(f"Failed to load key file: {e}")
+                         client = storage.Client()
+                else:
+                     try:
+                        credentials, project_id = google.auth.default()
+                        if not credentials.valid:
+                            request = google.auth.transport.requests.Request()
+                            credentials.refresh(request)
+                        client = storage.Client(credentials=credentials)
+                     except Exception as e:
+                         print(f"Auth default failed: {e}")
+                         client = storage.Client()
+
+                bucket = client.bucket("2dfriend_photo")
+
+                # 3. Delete files from GCS
+                for photo in target_photos:
+                    photo_val = photo.get('photo_base64', '')
+                    blob_path = None
+                    
+                    if photo_val:
+                        # Handle raw path or full URL
+                        if photo_val.startswith('AI_photo/'):
+                             blob_path = photo_val
+                        elif photo_val.startswith('https://storage.googleapis.com/2dfriend_photo/'):
+                             blob_path = photo_val.replace('https://storage.googleapis.com/2dfriend_photo/', '')
+                    
+                    if blob_path:
+                        try:
+                            blob = bucket.blob(blob_path)
+                            blob.delete()
+                            print(f"Deleted GCS blob: {blob_path}")
+                        except Exception as e:
+                            print(f"Failed to delete GCS blob {blob_path}: {e}")
+                            pass
+
+            except Exception as e:
+                print(f"GCS Setup/Deletion Error: {e}")
+
+        # 4. Delete from Database
+        delete_query = self.supabase.table("photo_info").delete().eq("id", id)
+        if num is not None:
+            delete_query = delete_query.eq("num", num)
+            
+        response = delete_query.execute()
         return response.data
 
     def add_photo_info(self, photo_data: dict):

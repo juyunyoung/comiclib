@@ -1,24 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Grid, Card, CardActionArea, CardMedia, CardContent, Typography, Rating } from '@mui/material';
-
+import api from '../utils/api';
+import { useTranslation } from '../context/LanguageContext';
 
 const ComicList = ({ searchTerm }) => {
   const [comics, setComics] = useState([]);
   const [filteredComics, setFilteredComics] = useState([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchComics = async () => {
-      const comicsData = await getComics();
-      setComics(comicsData);
+      try {
+        const comicsData = await api.get('/api/comics');
+        setComics(Array.isArray(comicsData) ? comicsData : []);
+      } catch (error) {
+        console.error("Failed to fetch comics:", error);
+      }
     };
     fetchComics();
   }, []);
 
   useEffect(() => {
-    if (searchTerm) {
+    if (searchTerm && Array.isArray(comics)) {
       const results = comics.filter(comic =>
-        comic.title.toLowerCase().includes(searchTerm.toLowerCase())
+        comic.title?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredComics(results);
     } else {

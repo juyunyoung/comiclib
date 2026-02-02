@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from '../context/LanguageContext';
-import { List, ListItem, ListItemAvatar, Avatar, ListItemText, Typography, Box, Rating, Paper, Tabs, Tab, IconButton, TextField, Button } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Paper, List, ListItem, IconButton, ListItemAvatar, Avatar, ListItemText, Rating, TextField, Button } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import api from '../utils/api';
+import { useUser } from '../context/UserContext';
+import { useTranslation } from '../context/LanguageContext';
 
 const StatsPage = () => {
   const { t } = useTranslation();
+  const { userId } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
   const [rankedCharacters, setRankedCharacters] = useState([]);
@@ -27,17 +30,11 @@ const StatsPage = () => {
     } else if (tabValue === 1) {
       fetchComics();
     }
-  }, [tabValue]);
+  }, [tabValue, userId]);
 
   const fetchCharacters = async () => {
     try {
-      const response = await fetch('/api/comics/user-characters?user_id=juyunyoung');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user characters');
-      }
-
-      const data = await response.json();
+      const data = await api.get(`/api/comics/user-characters?user_id=${userId}`);
 
       const formattedData = data.map((item, index) => ({
         id: `char-${index}`,
@@ -59,13 +56,7 @@ const StatsPage = () => {
 
   const fetchComics = async () => {
     try {
-      const response = await fetch('/api/comics');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch comics');
-      }
-
-      const data = await response.json();
+      const data = await api.get('/api/comics');
       setComicsList(data);
     } catch (error) {
       console.error("Error fetching comics:", error);

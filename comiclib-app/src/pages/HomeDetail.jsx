@@ -1,7 +1,10 @@
+import api from '../utils/api';
+import { useUser } from '../context/UserContext';
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import ComicForm from '../components/ComicForm';
 import { useTranslation } from '../context/LanguageContext';
+import { useAlert } from '../context/AlertContext';
 import { Button, Box } from '@mui/material';
 
 const HomeDetail = () => {
@@ -14,6 +17,8 @@ const HomeDetail = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [newCharName, setNewCharName] = useState('');
   const { t } = useTranslation();
+  const { userId } = useUser();
+  const { showAlert } = useAlert();
 
   useEffect(() => {
     if (location.state?.editMode) {
@@ -23,11 +28,7 @@ const HomeDetail = () => {
 
   const fetchComic = async () => {
     try {
-      const response = await fetch(`/api/comics/${id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch comic');
-      }
-      const data = await response.json();
+      const data = await api.get(`/api/comics/${id}`);
       setComic(data);
     } catch (error) {
       console.error("Error fetching comic detail:", error);
@@ -36,11 +37,8 @@ const HomeDetail = () => {
 
   const fetchCharacters = async () => {
     try {
-      const response = await fetch(`/api/comics/user-characters?user_id=juyunyoung&comics_id=${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCharacters(data);
-      }
+      const data = await api.get(`/api/comics/user-characters?user_id=${userId}&comics_id=${id}`);
+      setCharacters(data);
     } catch (error) {
       console.error("Error fetching characters:", error);
     }
@@ -51,7 +49,7 @@ const HomeDetail = () => {
       fetchComic();
       fetchCharacters();
     }
-  }, [id]);
+  }, [id, userId]);
 
   const handleEditClick = async () => {
     await fetchComic(); // Fetch fresh data
@@ -79,27 +77,20 @@ const HomeDetail = () => {
 
   const saveNewCharacter = async (name) => {
     try {
-      const response = await fetch('/api/comics/character', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: 'juyunyoung',
-          comics_id: id,
-          character_name: name,
-          note: ''
-        })
+      await api.post('/api/comics/character', {
+        user_id: userId,
+        comics_id: id,
+        character_name: name,
+        note: ''
       });
 
-      if (response.ok) {
-        setNewCharName('');
-        setIsAdding(false);
-        fetchCharacters(); // Refresh list
-      } else {
-        alert("Failed to add character");
-      }
+      setNewCharName('');
+      setIsAdding(false);
+      fetchCharacters(); // Refresh list
+
     } catch (error) {
       console.error("Error adding character:", error);
-      alert("Error adding character");
+      showAlert(t('detailPage.addCharFail'), t('common.error'), 'error');
     }
   };
 
@@ -108,19 +99,11 @@ const HomeDetail = () => {
     if (!window.confirm(t('detailPage.deleteConfirm'))) return;
 
     try {
-      console.log(charId);
-      const response = await fetch(`/api/comics/character/${charId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        fetchCharacters(); // Refresh list
-      } else {
-        alert("Failed to delete character");
-      }
+      await api.del(`/api/comics/character/${charId}`);
+      fetchCharacters(); // Refresh list
     } catch (error) {
       console.error("Error deleting character:", error);
-      alert("Error deleting character");
+      showAlert(t('detailPage.deleteCharFail'), t('common.error'), 'error');
     }
   };
 
@@ -131,12 +114,7 @@ const HomeDetail = () => {
       if (updatedData.file instanceof File) {
         const formData = new FormData();
         formData.append('file', updatedData.file);
-        const uploadResponse = await fetch('/api/comics/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        if (!uploadResponse.ok) throw new Error('Image upload failed');
-        const uploadResult = await uploadResponse.json();
+        const uploadResult = await api.upload('/api/comics/upload', formData);
         imageUrl = uploadResult.url;
       }
 
@@ -146,23 +124,16 @@ const HomeDetail = () => {
         file: undefined
       };
 
-      const response = await fetch(`/api/comics/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const result = await api.put(`/api/comics/${id}`, payload);
 
-      if (!response.ok) throw new Error('Failed to update comic');
-
-      const result = await response.json();
       const updated = Array.isArray(result) ? result[0] : result;
       setComic(updated);
       setIsEditMode(false);
-      alert('Successfully updated!');
+      showAlert(t('detailPage.updateSuccess'), t('common.success'), 'success');
 
     } catch (error) {
       console.error("Update failed:", error);
-      alert('Update failed: ' + error.message);
+      showAlert(`${t('detailPage.updateFail') || 'Update failed'}: ${error.message}`, t('common.error'), 'error');
     }
   };
 
@@ -200,24 +171,25 @@ const HomeDetail = () => {
           <Box sx={{ mt: 4 }}>
             <h3>{t('detailPage.friendInfo')}</h3>
             {characters.length > 0 ? (
-              <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {characters.map((char, index) => (
-                  <li key={index} style={{
-                    padding: '8px 16px',
+                  <Box component="li" key={index} sx={{
+                    py: 1, px: 2,
                     border: '1px solid #e0e0e0',
                     borderRadius: '20px',
-                    backgroundColor: '#f9f9f9',
+                    bgcolor: '#f9f9f9',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     width: 'fit-content',
-                    gap: '8px'
+                    gap: 1
                   }}>
                     <strong>{char.character_name}</strong>
-                    <span
+                    <Box
+                      component="span"
                       onClick={(e) => handleDeleteCharacter(char.character_id, e)}
-                      style={{
-                        color: 'red',
+                      sx={{
+                        color: 'error.main',
                         fontWeight: 'bold',
                         cursor: 'pointer',
                         fontSize: '1em',
@@ -225,20 +197,20 @@ const HomeDetail = () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         lineHeight: 1,
-                        marginLeft: '4px'
+                        ml: 0.5
                       }}
                     >
                       -
-                    </span>
-                  </li>
+                    </Box>
+                  </Box>
                 ))}
 
                 {isAdding && (
-                  <li style={{
-                    padding: '8px 16px',
+                  <Box component="li" sx={{
+                    py: 1, px: 2,
                     border: '1px solid #1976d2',
                     borderRadius: '20px',
-                    backgroundColor: '#fff',
+                    bgcolor: '#fff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -259,32 +231,32 @@ const HomeDetail = () => {
                         fontFamily: 'inherit'
                       }}
                     />
-                  </li>
+                  </Box>
                 )}
 
-                <li onClick={handleAddClick} style={{
-                  padding: '8px 16px',
+                <Box component="li" onClick={handleAddClick} sx={{
+                  py: 1, px: 2,
                   border: '1px solid #e0e0e0',
                   borderRadius: '20px',
-                  backgroundColor: '#fff',
+                  bgcolor: '#fff',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   width: 'fit-content',
-                  color: '#1976d2',
+                  color: 'primary.main',
                   fontWeight: 'bold'
                 }}>
                   +
-                </li>
-              </ul>
+                </Box>
+              </Box>
             ) : (
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <p style={{ margin: 0 }}>{t('detailPage.noCharacters')}</p>
 
                 {isAdding ? (
-                  <div style={{
-                    padding: '4px 8px',
+                  <Box sx={{
+                    py: 0.5, px: 1,
                     border: '1px solid #1976d2',
                     borderRadius: '20px',
                     background: 'white',
@@ -304,18 +276,11 @@ const HomeDetail = () => {
                         fontSize: '0.9em'
                       }}
                     />
-                  </div>
+                  </Box>
                 ) : (
-                  <button onClick={handleAddClick} style={{
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    border: '1px solid #1976d2',
-                    background: 'white',
-                    color: '#1976d2',
-                    cursor: 'pointer'
-                  }}>+</button>
+                  <Button onClick={handleAddClick} size="small" variant="outlined" sx={{ borderRadius: '20px', minWidth: '30px', p: '2px 8px' }}>+</Button>
                 )}
-              </div>
+              </Box>
             )}
           </Box>
         </>

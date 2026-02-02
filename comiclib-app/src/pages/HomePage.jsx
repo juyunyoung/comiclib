@@ -9,8 +9,6 @@ const HomePage = () => {
 
   return (
     <div>
-      <ComicList searchTerm="" />
-
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4" component="h1">
           {t('home.title')}

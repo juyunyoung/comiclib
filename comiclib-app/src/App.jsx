@@ -1,32 +1,52 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Container } from '@mui/material';
-import Nevigation from './components/Nevigation';
-import HomePage from './pages/HomePage';
-import RegisterPage from './pages/RegisterPage';
-import DetailPage from './pages/DetailPage';
-import StatsPage from './pages/StatsPage';
-import HomeDetail from './pages/HomeDetail';
-import FourCutPage from './pages/FourCutPage';
-import SearchPage from './pages/SearchPage';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { Container, CircularProgress, Box } from '@mui/material';
+import ErrorBoundary from './components/ErrorBoundary';
+
+import Navigation from './components/Navigation';
+
+// Lazy load pages
+const HomePage = lazy(() => import('./pages/HomePage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const DetailPage = lazy(() => import('./pages/DetailPage'));
+const StatsPage = lazy(() => import('./pages/StatsPage'));
+const HomeDetail = lazy(() => import('./pages/HomeDetail'));
+const FourCutPage = lazy(() => import('./pages/FourCutPage'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
+
+function AppContent() {
+  const location = useLocation();
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Container sx={{ mt: 4, mb: 10, flex: 1 }}>
+        <ErrorBoundary key={location.pathname}>
+          <Suspense fallback={
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+              <CircularProgress />
+            </Box>
+          }>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/detail/:id" element={<DetailPage />} />
+              <Route path="/home-detail/:id" element={<HomeDetail />} />
+              <Route path="/stats" element={<StatsPage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/four-cut" element={<FourCutPage />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </Container>
+      <Navigation />
+    </div>
+  );
+}
 
 function App() {
   return (
     <Router>
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Container sx={{ mt: 4, mb: 10, flex: 1 }}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/detail/:id" element={<DetailPage />} />
-            <Route path="/home-detail/:id" element={<HomeDetail />} />
-            <Route path="/stats" element={<StatsPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/four-cut" element={<FourCutPage />} />
-          </Routes>
-        </Container>
-        <Nevigation />
-      </div>
+      <AppContent />
     </Router>
   );
 }

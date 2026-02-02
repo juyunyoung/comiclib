@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Card, CardContent, Typography, Button, CircularProgress, Alert } from '@mui/material';
+import api from '../utils/api';
+import { useUser } from '../context/UserContext';
 
 const EventList = ({ query }) => {
 
@@ -7,6 +9,7 @@ const EventList = ({ query }) => {
   const [agentResponse, setAgentResponse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { userId } = useUser();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,13 +22,7 @@ const EventList = ({ query }) => {
 
         if (query) {
           // --- Search Mode (Using comiclib-api) ---
-          const response = await fetch(`/api/searchInfo?query=${encodeURIComponent(query)}`);
-
-          if (!response.ok) {
-            throw new Error(`Search Failed: ${response.status}`);
-          }
-
-          const data = await response.json();
+          const data = await api.get(`/api/searchInfo?query=${encodeURIComponent(query)}`);
           // data format: { text: "...", agent_role: "...", sources: [ { title, url, type } ] }
 
           setAgentResponse(data.text);
@@ -33,21 +30,14 @@ const EventList = ({ query }) => {
 
         } else {
           // --- Default News Mode (Using Comprehensive Search) ---
-          // TODO: user_id should be dynamic, but hardcoded for now as requested/context implies 'juyunyoung'
-          const response = await fetch('/api/search/comprehensive?user_id=juyunyoung');
-
-          if (!response.ok) {
-            throw new Error(`News Fetch Failed: ${response.status}`);
-          }
-
-          const data = await response.json();
+          const data = await api.get(`/api/search/comprehensive?user_id=${userId}`);
           // data format: { items: [ { category, title, link, content, date } ] }
           setItems(data.items || []);
         }
 
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError(err.message);
+        setError(err.message || 'Failed to load info');
       } finally {
         setLoading(false);
       }

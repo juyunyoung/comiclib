@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, ButtonGroup, Tooltip, Box } from '@mui/material';
 import { useTranslation } from '../context/LanguageContext';
 
-const Nevigation = () => {
+const Navigation = () => {
   const { t, language, setLanguage } = useTranslation();
 
   return (
@@ -52,4 +52,4 @@ const Nevigation = () => {
   );
 };
 
-export default Nevigation;
+export default Navigation;
