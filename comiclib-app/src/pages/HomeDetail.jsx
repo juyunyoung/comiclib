@@ -5,7 +5,9 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import ComicForm from '../components/ComicForm';
 import { useTranslation } from '../context/LanguageContext';
 import { useAlert } from '../context/AlertContext';
-import { Button, Box } from '@mui/material';
+import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+
+// ... (imports remain the same, just updated @mui/material import above)
 
 const HomeDetail = () => {
   const { id } = useParams();
@@ -20,9 +22,13 @@ const HomeDetail = () => {
   const { userId } = useUser();
   const { showAlert } = useAlert();
 
+  // Delete Dialog State
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'comic' | 'character', id: string }
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   useEffect(() => {
-    if (location.state?.editMode) {
-      setIsEditMode(false);
+    if (location.state?.editMode !== undefined) {
+      setIsEditMode(location.state.editMode);
     }
   }, [location.state]);
 
@@ -94,17 +100,47 @@ const HomeDetail = () => {
     }
   };
 
-  const handleDeleteCharacter = async (charId, e) => {
+  const initiateDeleteCharacter = (charId, e) => {
     e.stopPropagation();
-    if (!window.confirm(t('detailPage.deleteConfirm'))) return;
+    setDeleteTarget({ type: 'character', id: charId });
+    setIsDeleteDialogOpen(true);
+  };
 
-    try {
-      await api.del(`/api/comics/character/${charId}`);
-      fetchCharacters(); // Refresh list
-    } catch (error) {
-      console.error("Error deleting character:", error);
-      showAlert(t('detailPage.deleteCharFail'), t('common.error'), 'error');
+  // Renamed to conformDelete to call actual API
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    if (deleteTarget.type === 'character') {
+      try {
+        await api.del(`/api/comics/character/${deleteTarget.id}`);
+        fetchCharacters();
+      } catch (error) {
+        console.error("Error deleting character:", error);
+        showAlert(t('detailPage.deleteCharFail'), t('common.error'), 'error');
+      }
+    } else if (deleteTarget.type === 'comic') {
+      try {
+        await api.del(`/api/comics/${id}`);
+        showAlert(t('common.deleteSuccess'), t('common.success'), 'success');
+        navigate('/stats', { state: { activeTab: location.state?.activeTab || 1 } });
+      } catch (error) {
+        console.error("Delete failed:", error);
+        showAlert(t('common.deleteFail'), t('common.error'), 'error');
+      }
     }
+    setIsDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+    setDeleteTarget(null);
+  };
+
+
+  const handleDeleteCharacter = async (charId, e) => {
+    // Deprecated in favor of initiateDeleteCharacter but keeping function signature if needed or removing
+    // Actually we will replace usage
   };
 
   const handleUpdate = async (updatedData) => {
@@ -137,6 +173,11 @@ const HomeDetail = () => {
     }
   };
 
+  const handleInitiateDeleteComic = () => {
+    setDeleteTarget({ type: 'comic' });
+    setIsDeleteDialogOpen(true);
+  };
+
   if (!comic) {
     return <div>{t('detailPage.loading')}</div>;
   }
@@ -147,7 +188,10 @@ const HomeDetail = () => {
         <>
           <h1>{t('detailPage.editComic')}</h1>
           <ComicForm initialData={comic} onSubmit={handleUpdate} submitLabel={t('comicForm.submitUpdate')} />
-          <Button onClick={() => setIsEditMode(false)} sx={{ mt: 2 }} variant="outlined" color="error">{t('comicForm.cancel')}</Button>
+          <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+            <Button onClick={() => setIsEditMode(false)} variant="outlined" color="primary" sx={{ flexGrow: 1 }}>{t('comicForm.cancel')}</Button>
+            <Button onClick={handleInitiateDeleteComic} variant="contained" color="error" sx={{ flexGrow: 1 }}>{t('common.delete')}</Button>
+          </Box>
         </>
       ) : (
         <>
@@ -187,7 +231,7 @@ const HomeDetail = () => {
                     <strong>{char.character_name}</strong>
                     <Box
                       component="span"
-                      onClick={(e) => handleDeleteCharacter(char.character_id, e)}
+                      onClick={(e) => initiateDeleteCharacter(char.character_id, e)}
                       sx={{
                         color: 'error.main',
                         fontWeight: 'bold',
@@ -285,6 +329,33 @@ const HomeDetail = () => {
           </Box>
         </>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={cancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {deleteTarget?.type === 'comic' ? (t('detailPage.deleteComicTitle') || 'Delete Comic') : (t('detailPage.deleteCharTitle') || 'Delete Character')}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {deleteTarget?.type === 'comic'
+              ? (t('detailPage.deleteConfirm') || 'Are you sure you want to delete this comic and all its characters?')
+              : (t('detailPage.deleteConfirm') || 'Are you sure you want to delete this character?')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cancelDelete} color="primary">
+            {t('common.cancel') || 'Cancel'}
+          </Button>
+          <Button onClick={confirmDelete} color="error" autoFocus>
+            {t('common.delete') || 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

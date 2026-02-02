@@ -152,8 +152,13 @@ const CharacterInfo = () => {
               <Paper key={char.id} sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }} elevation={1}>
                 <ListItem
                   alignItems="flex-start"
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/detail/${char.charId}`, { state: { activeTab: tabValue, editMode: false } })}
                   secondaryAction={
-                    <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/detail/${char.charId}`, { state: { activeTab: tabValue } })}>
+                    <IconButton edge="end" aria-label="edit" onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/detail/${char.charId}`, { state: { activeTab: tabValue, editMode: true } });
+                    }}>
                       <EditIcon />
                     </IconButton>
                   }
@@ -215,8 +220,13 @@ const CharacterInfo = () => {
               <Paper key={comic.id} sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }} elevation={1}>
                 <ListItem
                   alignItems="flex-start"
+                  sx={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/home-detail/${comic.id}`, { state: { editMode: false, data: comic, activeTab: tabValue } })}
                   secondaryAction={
-                    <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/home-detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } })}>
+                    <IconButton edge="end" aria-label="edit" onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/home-detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } });
+                    }}>
                       <EditIcon />
                     </IconButton>
                   }
@@ -253,7 +263,6 @@ const CharacterInfo = () => {
               </Typography>
             )}
           </List>
-
         )}
       </Paper>
     </Box >

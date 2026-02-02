@@ -46,6 +46,14 @@ def update_comic(comic_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@comics_bp.route('/comics/<int:comic_id>', methods=['DELETE'])
+def delete_comic(comic_id):
+    try:
+        data = comic_service.delete_comic(comic_id)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @comics_bp.route('/comics', methods=['POST'])
 def add_comic():
     try:

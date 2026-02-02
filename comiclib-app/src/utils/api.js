@@ -1,19 +1,22 @@
 
 const handleResponse = async (response) => {
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (e) {
+    data = null;
+  }
+
   if (!response.ok) {
-    let errorMessage = 'An error occurred';
-    try {
-      const errorData = await response.json();
-      // Handle different error formats if necessary
-      errorMessage = errorData.error || errorData.message || `HTTP Error ${response.status}`;
-    } catch (e) {
-      errorMessage = await response.text() || `HTTP Error ${response.status}`;
-    }
+    const errorMessage = (data && (data.error || data.message)) || text || `HTTP Error ${response.status}`;
     throw new Error(errorMessage);
   }
-  // For 204 No Content, return null
+
+  // For 204 No Content, return null (logic handled by text check above effectively, but explicit check for status is fine too)
   if (response.status === 204) return null;
-  return response.json();
+
+  return data;
 };
 
 const api = {

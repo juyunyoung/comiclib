@@ -13,6 +13,8 @@ const en = {
     warning: 'Warning',
     cancel: 'Cancel',
     delete: 'Delete',
+    deleteSuccess: 'Delete Successful',
+    deleteFail: 'Delete Failed',
   },
   home: {
     title: '2D Friend News',
@@ -69,6 +71,7 @@ const en = {
     updateSuccess: 'Successfully updated!',
     updateFail: 'Update failed: ',
     newsList: 'News List',
+    newsListMember: 'On News List',
     deleteConfirm: 'Are you sure you want to delete this character?',
     deleteConfirmTitle: 'Delete Photo',
     deleteConfirmPhoto: 'Are you sure you want to delete this photo?',

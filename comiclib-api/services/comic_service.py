@@ -45,6 +45,19 @@ class ComicService:
 
     def delete_comic(self, comic_id: int):
         """Delete a comic by ID."""
+        # 1. Get all characters for this comic
+        chars = self.supabase.table("comic_character").select("id").eq("comics_id", comic_id).execute()
+        
+        for char in chars.data:
+            char_id = char['id']
+            # 2. Delete all photos for this character (GCS + DB)
+            # The 'id' in photo_info corresponds to comic_character.id
+            self.delete_photo_info_by_id(char_id)
+            
+            # 3. Delete the character
+            self.supabase.table("comic_character").delete().eq("id", char_id).execute()
+            
+        # 4. Delete the comic
         response = self.supabase.table(self.table_name).delete().eq("id", comic_id).execute()
         return response.data
 

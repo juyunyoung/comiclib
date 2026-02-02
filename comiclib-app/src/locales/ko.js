@@ -13,6 +13,8 @@ const ko = {
     warning: '경고',
     cancel: '취소',
     delete: '삭제',
+    deleteSuccess: '삭제 성공',
+    deleteFail: '삭제 실패',
   },
   home: {
     title: '2D 친구 소식',
@@ -69,6 +71,7 @@ const ko = {
     updateSuccess: '성공적으로 수정되었습니다!',
     updateFail: '수정 실패: ',
     newsList: '뉴스 리스트',
+    newsListMember: '뉴스 리스트에 포함됨',
     deleteConfirm: '정말로 이 캐릭터를 삭제하시겠습니까?',
     deleteConfirmTitle: '사진 삭제',
     deleteConfirmPhoto: '정말로 이 사진을 삭제하시겠습니까?',

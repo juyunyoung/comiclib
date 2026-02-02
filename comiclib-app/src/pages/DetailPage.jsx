@@ -21,7 +21,13 @@ const DetailPage = () => {
   const [error, setError] = useState(null); // Re-added error state
   const [character, setCharacter] = useState(null);
   const [photos, setPhotos] = useState([]);
-  const [isEditMode, setIsEditMode] = useState(false); // New state from diff
+  const [isEditMode, setIsEditMode] = useState(location.state?.editMode || false);
+
+  useEffect(() => {
+    if (location.state?.editMode !== undefined) {
+      setIsEditMode(location.state.editMode);
+    }
+  }, [location.state]);
 
   // Modal State
   const [selectedImage, setSelectedImage] = useState(null);
@@ -207,96 +213,153 @@ const DetailPage = () => {
         &larr; {t('detailPage.backToList')}
       </Button>
 
-      <Typography variant="h4" gutterBottom>
-        {t('detailPage.editCharacter')}
-      </Typography>
+      {isEditMode ? (
+        <>
+          <Typography variant="h4" gutterBottom>
+            {t('detailPage.editCharacter')}
+          </Typography>
+          <Card variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Photo Upload */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <Avatar
+                  src={photoUrl}
+                  alt={name}
+                  sx={{ width: 150, height: 150 }}
+                />
 
-      <Card variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%', maxWidth: '400px' }}>
+                  <TextField
+                    label={t('detailPage.imageUrl')}
+                    value={photoUrl}
+                    onChange={(e) => {
+                      setPhotoUrl(e.target.value);
+                      setPhotoFile(null); // Clear file if user types URL
+                    }}
+                    fullWidth
+                    size="small"
+                  />
+                  <Button variant="contained" component="label" size="small" sx={{ whiteSpace: 'nowrap' }}>
+                    {t('detailPage.uploadPhoto')}
+                    <input type="file" hidden accept="image/*" onChange={handlePhotoChange} />
+                  </Button>
+                </Box>
+              </Box>
 
-          {/* Photo Upload */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            <Avatar
-              src={photoUrl}
-              alt={name}
-              sx={{ width: 150, height: 150 }}
-            />
-
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '100%', maxWidth: '400px' }}>
+              {/* Name */}
               <TextField
-                label={t('detailPage.imageUrl')}
-                value={photoUrl}
-                onChange={(e) => {
-                  setPhotoUrl(e.target.value);
-                  setPhotoFile(null); // Clear file if user types URL
-                }}
+                label={t('detailPage.name')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 fullWidth
-                size="small"
               />
-              <Button variant="contained" component="label" size="small" sx={{ whiteSpace: 'nowrap' }}>
-                {t('detailPage.uploadPhoto')}
-                <input type="file" hidden accept="image/*" onChange={handlePhotoChange} />
-              </Button>
+
+              {/* Affinity and News List */}
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                <Box>
+                  <Typography component="legend">{t('detailPage.affinity')}</Typography>
+                  <Rating
+                    name="affinity"
+                    value={affinity}
+                    onChange={(event, newValue) => {
+                      setAffinity(newValue);
+                    }}
+                    icon={<FavoriteIcon fontSize="inherit" color="error" />}
+                    emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
+                  />
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography component="legend">{t('detailPage.newsList')}</Typography>
+                  <input
+                    type="checkbox"
+                    checked={isNewsMember}
+                    onChange={(e) => setIsNewsMember(e.target.checked)}
+                    style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Note */}
+              <TextField
+                label={t('detailPage.note')}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                multiline
+                rows={4}
+                fullWidth
+              />
+
+              {/* Save Button */}
+              <Box sx={{ display: 'flex', Gap: 1, mt: 2 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  onClick={handleUpdate}
+                  sx={{ flexGrow: 1 }}
+                >
+                  {t('detailPage.saveChanges')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  size="large"
+                  onClick={() => setIsEditMode(false)}
+                  sx={{ ml: 1 }}
+                >
+                  {t('common.cancel')}
+                </Button>
+              </Box>
             </Box>
+          </Card>
+        </>
+      ) : (
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h4" gutterBottom>
+              {name}
+            </Typography>
+            <Button variant="contained" onClick={() => setIsEditMode(true)}>
+              {t('detailPage.edit')}
+            </Button>
           </Box>
 
-          {/* Name */}
-          <TextField
-            label={t('detailPage.name')}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-          />
+          <Card variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {/* Photo Display */}
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <Avatar
+                  src={photoUrl}
+                  alt={name}
+                  sx={{ width: 150, height: 150 }}
+                />
+              </Box>
 
-          {/* Affinity and News List */}
-          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
-            <Box>
-              <Typography component="legend">{t('detailPage.affinity')}</Typography>
-              <Rating
-                name="affinity"
-                value={affinity}
-                onChange={(event, newValue) => {
-                  setAffinity(newValue);
-                }}
-                icon={<FavoriteIcon fontSize="inherit" color="error" />}
-                emptyIcon={<FavoriteBorderIcon fontSize="inherit" />}
-              />
+              {/* Affinity */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <Typography variant="h6">{t('detailPage.affinity')}:</Typography>
+                <Rating value={affinity} readOnly icon={<FavoriteIcon fontSize="inherit" color="error" />} emptyIcon={<FavoriteBorderIcon fontSize="inherit" />} />
+              </Box>
+
+              {/* Note */}
+              <Box>
+                <Typography variant="h6" gutterBottom>{t('detailPage.note')}</Typography>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', bgcolor: '#f9f9f9', p: 2, borderRadius: 1 }}>
+                  {note || t('detailPage.noNote')}
+                </Typography>
+              </Box>
+
+              {/* News List Status */}
+              {isNewsMember && (
+                <Typography variant="body2" color="primary">
+                  ✓ {t('detailPage.newsListMember')}
+                </Typography>
+              )}
             </Box>
-
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography component="legend">{t('detailPage.newsList')}</Typography>
-              <input
-                type="checkbox"
-                checked={isNewsMember}
-                onChange={(e) => setIsNewsMember(e.target.checked)}
-                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-            </Box>
-          </Box>
-
-          {/* Note */}
-          <TextField
-            label={t('detailPage.note')}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            multiline
-            rows={4}
-            fullWidth
-          />
-
-          {/* Save Button */}
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={handleUpdate}
-            sx={{ mt: 2 }}
-          >
-            {t('detailPage.saveChanges')}
-          </Button>
-
-        </Box>
-      </Card>
+          </Card>
+        </>
+      )}
 
       {/* Styled Photos Grid */}
       {photos.length > 0 && (
