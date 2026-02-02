@@ -8,7 +8,7 @@ import api from '../utils/api';
 import { useUser } from '../context/UserContext';
 import { useTranslation } from '../context/LanguageContext';
 
-const StatsPage = () => {
+const CharacterInfo = () => {
   const { t } = useTranslation();
   const { userId } = useUser();
   const navigate = useNavigate();
@@ -210,69 +210,54 @@ const StatsPage = () => {
         )}
 
         {tabValue === 1 && (
-          <>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <TextField
-                fullWidth
-                size="small"
-                variant="outlined"
-                placeholder={t('statsPage.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <Button variant="contained" onClick={handleSearch} disabled={!searchQuery.trim()}>
-                {t('statsPage.searchButton')}
-              </Button>
-            </Box>
-            <List>
-              {comicsList.map((comic) => (
-                <Paper key={comic.id} sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }} elevation={1}>
-                  <ListItem
-                    alignItems="flex-start"
-                    secondaryAction={
-                      <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/home-detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } })}>
-                        <EditIcon />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemAvatar sx={{ width: 60, height: 60, mr: 2 }}>
-                      <Avatar
-                        src={comic.coverImage}
-                        variant="rounded"
-                        sx={{ width: 60, height: 60 }}
-                      />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="h6" component="div">
-                          {comic.title}
-                        </Typography>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                            {comic.author}
-                          </Typography>
-                          <Rating value={comic.rating} readOnly size="small" />
-                        </Box>
-                      }
-                      secondaryTypographyProps={{ component: 'div' }}
+          <List>
+            {comicsList.map((comic) => (
+              <Paper key={comic.id} sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }} elevation={1}>
+                <ListItem
+                  alignItems="flex-start"
+                  secondaryAction={
+                    <IconButton edge="end" aria-label="edit" onClick={() => navigate(`/home-detail/${comic.id}`, { state: { editMode: true, data: comic, activeTab: tabValue } })}>
+                      <EditIcon />
+                    </IconButton>
+                  }
+                >
+                  <ListItemAvatar sx={{ width: 60, height: 60, mr: 2 }}>
+                    <Avatar
+                      src={comic.coverImage}
+                      variant="rounded"
+                      sx={{ width: 60, height: 60 }}
                     />
-                  </ListItem>
-                </Paper>
-              ))}
-              {comicsList.length === 0 && (
-                <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
-                  {t('statsPage.noComics')}
-                </Typography>
-              )}
-            </List>
-          </>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography variant="h6" component="div">
+                        {comic.title}
+                      </Typography>
+                    }
+                    secondary={
+                      <Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                          {comic.author}
+                        </Typography>
+                        <Rating value={comic.rating} readOnly size="small" />
+                      </Box>
+                    }
+                    secondaryTypographyProps={{ component: 'div' }}
+                  />
+                </ListItem>
+              </Paper>
+            ))}
+            {comicsList.length === 0 && (
+              <Typography align="center" color="text.secondary" sx={{ mt: 4 }}>
+                {t('statsPage.noComics')}
+              </Typography>
+            )}
+          </List>
+
         )}
       </Paper>
-    </Box>
+    </Box >
   );
 };
 
-export default StatsPage;
+export default CharacterInfo;

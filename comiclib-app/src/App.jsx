@@ -9,8 +9,8 @@ import Navigation from './components/Navigation';
 const HomePage = lazy(() => import('./pages/HomePage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const DetailPage = lazy(() => import('./pages/DetailPage'));
-const StatsPage = lazy(() => import('./pages/StatsPage'));
 const HomeDetail = lazy(() => import('./pages/HomeDetail'));
+const CharacterInfo = lazy(() => import('./pages/CharacterInfo'));
 const FourCutPage = lazy(() => import('./pages/FourCutPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 
@@ -31,7 +31,7 @@ function AppContent() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/detail/:id" element={<DetailPage />} />
               <Route path="/home-detail/:id" element={<HomeDetail />} />
-              <Route path="/stats" element={<StatsPage />} />
+              <Route path="/stats" element={<CharacterInfo />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/four-cut" element={<FourCutPage />} />
             </Routes>
