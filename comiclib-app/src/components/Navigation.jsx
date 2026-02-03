@@ -16,7 +16,7 @@ const Navigation = () => {
             </Button>
           </Tooltip>
           <Tooltip title={t('nevigation.home')}>
-            <Button color="inherit" component={Link} to="/" sx={{ flex: 1, p: 1 }}>
+            <Button color="inherit" component={Link} to="/home" sx={{ flex: 1, p: 1 }}>
               <img src="/icons/home.png" alt="Home" style={{ height: '40px', width: 'auto' }} />
             </Button>
           </Tooltip>
