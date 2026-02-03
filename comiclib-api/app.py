@@ -14,12 +14,14 @@ from services.make_photo import make_photo_bp
 from services.search_info import search_info_bp
 from services.news import news_bp
 from services.comics import comics_bp
+from services.naver_search import naver_bp
 
 # Register Blueprints
 app.register_blueprint(make_photo_bp, url_prefix='/api')
 app.register_blueprint(search_info_bp, url_prefix='/api')
 app.register_blueprint(news_bp, url_prefix='/api')
 app.register_blueprint(comics_bp, url_prefix='/api')
+app.register_blueprint(naver_bp, url_prefix='/api')
 
 @app.route('/')
 def health_check():
