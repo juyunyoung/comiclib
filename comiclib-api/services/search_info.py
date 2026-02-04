@@ -21,7 +21,7 @@ def get_search_info(query, api_key):
     system_instruction = "당신은 만화책 전문가 AI 에이전트입니다. 사용자의 질문에 대해 Google 검색을 사용하여 정확하고 풍부한 정보를 찾아 답변해주세요. 특히 만화 관련 리뷰나 영상(YouTube)이 있다면 해당 정보도 함께 찾아서 소개해 주세요. 답변은 한국어로 친절하게 작성해주세요."
 
     response = client.models.generate_content(
-        model='gemini-2.0-flash',
+        model='gemini-3-flash-preview',
         contents=query,
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -96,7 +96,7 @@ def get_game_search_info(query, api_key):
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3-flash-preview',
             contents=query,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -190,7 +190,7 @@ def get_character_info(query, api_key):
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3-flash-preview',
             contents=f"'{query}'에 등장하는 주요 캐릭터들을 찾아주세요.",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -308,7 +308,7 @@ def get_comprehensive_search_info(user_id, api_key):
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash',
+            model='gemini-3-flash-preview',
             contents=f"다음 캐릭터들과 작품에 대한 최신 소식(홈페이지, 이벤트, 콜라보, 굿즈, 출판 등)을 모두 찾아주세요: {targets_str} ,{two_months_before} 이전의 정보는 목록에서 제외해주세요.",
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
